@@ -1,7 +1,36 @@
+{
+  "name": "icp-discovery-engine",
+  "version": "1.0.0",
+  "description": "AI-powered ICP Discovery Engine",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0"
+  }
+}
+```
+
+**3. Fix `Dockerfile`** — edit and replace with:
+```
 FROM node:20-alpine
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
+COPY package.json ./
+RUN npm install
 COPY . .
 EXPOSE 3000
 CMD ["node", "server.js"]
+```
+
+**4. Fix `railway.toml`** — edit and replace with:
+```
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm start"
