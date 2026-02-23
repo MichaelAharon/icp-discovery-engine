@@ -15,22 +15,3 @@
   }
 }
 ```
-
-**3. Fix `Dockerfile`** — edit and replace with:
-```
-FROM node:20-alpine
-WORKDIR /app
-COPY package.json ./
-RUN npm install
-COPY . .
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
-
-**4. Fix `railway.toml`** — edit and replace with:
-```
-[build]
-builder = "nixpacks"
-
-[deploy]
-startCommand = "npm start"
