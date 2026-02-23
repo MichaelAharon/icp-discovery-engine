@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICP Discovery Engine</title>
+<meta name="description" content="AI-powered Ideal Customer Profile discovery. Research any company, get market intelligence, and generate ICP reports.">
+<meta property="og:title" content="ICP Discovery Engine">
+<meta property="og:description" content="AI-powered market research and ICP generation for B2B sales teams.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,:before,:after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#06080f;--s1:#0c1220;--s2:#131c30;--s3:#1a2540;--s4:#223050;
+  --bdr:#1e2d4a;--bdr2:#2a3d5e;--bdr-f:#3b82f6;
+  --t1:#f1f5f9;--t2:#cbd5e1;--t3:#94a3b8;--t4:#64748b;
+  --acc:#3b82f6;--acc2:#06b6d4;--acc3:#8b5cf6;
+  --ok:#10b981;--wrn:#f59e0b;--err:#ef4444;
+  --g1:linear-gradient(135deg,#3b82f6,#06b6d4);
+  --g2:linear-gradient(135deg,#3b82f6,#8b5cf6);
+  --r:14px;--rs:8px;
+  --f:'DM Sans',system-ui,sans-serif;
+  --m:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--f);background:var(--bg);color:var(--t1);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px}
+
+/* ── Noise texture overlay ── */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size:200px;opacity:.4}
+
+.wrap{max-width:880px;margin:0 auto;padding:20px 16px 100px;position:relative;z-index:1}
+
+/* ── HEADER ── */
+.hdr{text-align:center;padding:56px 0 36px;position:relative}
+.hdr::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:2px;background:var(--g1);border-radius:2px}
+.hdr h1{font-size:2rem;font-weight:700;letter-spacing:-.6px;background:var(--g1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.hdr p{color:var(--t3);font-size:.92rem;max-width:540px;margin:0 auto}
+.hdr .badge{display:inline-block;margin-top:12px;padding:4px 14px;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--acc2);background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:20px}
+
+/* ── STEP NAV ── */
+.nav{display:flex;gap:3px;margin-bottom:28px;padding:4px;background:var(--s1);border-radius:var(--r);border:1px solid var(--bdr)}
+.nav-t{flex:1;padding:10px 8px;text-align:center;font-size:.76rem;font-weight:600;color:var(--t4);border-radius:10px;cursor:pointer;transition:.2s;letter-spacing:.3px;user-select:none}
+.nav-t.on{background:var(--acc);color:#fff;box-shadow:0 2px 16px rgba(59,130,246,.3)}
+.nav-t.done{color:var(--ok)}.nav-t.done::after{content:' ✓';font-size:.65rem}
+.nav-t:hover:not(.on){background:var(--s2);color:var(--t3)}
+
+/* ── PANELS ── */
+.pnl{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);padding:24px;margin-bottom:16px;transition:.2s}
+.pnl:hover{border-color:var(--bdr2)}
+.ph{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.pi{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.15);flex-shrink:0}
+.pt{font-size:1rem;font-weight:600}.ps{font-size:.8rem;color:var(--t4)}
+
+/* ── FORM ── */
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:.8rem;font-weight:500;color:var(--t3);margin-bottom:5px;letter-spacing:.2px}
+.fl .rq{color:var(--err);margin-left:2px}
+input[type=text],input[type=url],select,textarea{
+  width:100%;padding:10px 13px;background:var(--s2);border:1px solid var(--bdr);
+  border-radius:var(--rs);color:var(--t1);font-family:var(--f);font-size:.88rem;
+  transition:.15s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+select{appearance:none;cursor:pointer;padding-right:34px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2394a3b8'%3E%3Cpath d='M5 7L0 2h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center}
+textarea{resize:vertical;min-height:70px}
+.url-g{display:flex;gap:8px}.url-g input{flex:1}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── BUTTONS ── */
+.btn{padding:10px 20px;border:none;border-radius:var(--rs);font-family:var(--f);font-size:.86rem;font-weight:600;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:7px}
+.btn:active{transform:scale(.98)}
+.bp{background:var(--g1);color:#fff;box-shadow:0 2px 12px rgba(59,130,246,.2)}.bp:hover{box-shadow:0 4px 24px rgba(59,130,246,.35);transform:translateY(-1px)}.bp:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.bs{background:var(--s2);color:var(--t3);border:1px solid var(--bdr)}.bs:hover{background:var(--s3);color:var(--t2)}
+.bg{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.bw{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
+.br{display:flex;justify-content:space-between;gap:10px;margin-top:20px}
+
+/* ── RESEARCH STATUS ── */
+.rs-box{display:none;padding:14px 18px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--rs);margin-top:14px}
+.rs-box.on{display:block}
+.dot{display:inline-block;width:7px;height:7px;background:var(--ok);border-radius:50%;margin-right:7px;animation:p 1.2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.25}}
+.so{margin-top:10px;padding:14px;background:var(--bg);border-radius:var(--rs);font-family:var(--m);font-size:.75rem;line-height:1.7;color:var(--t4);max-height:350px;overflow-y:auto;white-space:pre-wrap;word-break:break-word}
+
+/* ── RESULT GRID ── */
+.rg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rc{padding:14px;background:var(--s2);border-radius:var(--rs);border:1px solid var(--bdr)}
+.rc-l{font-size:.7rem;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.rc-v{font-size:.9rem;font-weight:500}
+
+/* ── TAGS ── */
+.tag{display:inline-block;padding:2px 9px;font-size:.72rem;font-weight:600;border-radius:4px;margin:2px}
+.tb{background:rgba(59,130,246,.12);color:#60a5fa}
+.tg{background:rgba(16,185,129,.12);color:#34d399}
+.to{background:rgba(245,158,11,.12);color:#fbbf24}
+.tc{background:rgba(6,182,212,.12);color:#22d3ee}
+.tp{background:rgba(139,92,246,.12);color:#a78bfa}
+
+/* ── Q SECTIONS ── */
+.qs{margin-bottom:20px}
+.qsh{display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--s2);border-radius:var(--rs);margin-bottom:10px;border-left:3px solid var(--acc)}
+.qsh h3{font-size:.9rem;font-weight:600}
+.qi{padding:12px 14px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--rs);margin-bottom:8px;transition:.15s}
+.qi:hover{border-color:var(--acc)}
+.qi label{font-size:.84rem;font-weight:500;display:block;margin-bottom:6px}
+.qi select{background:var(--bg)}
+
+/* ── SCORE ── */
+.sf-bg{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.sf{height:100%;border-radius:3px;transition:width .6s}.sf.h{background:var(--ok)}.sf.m{background:var(--wrn)}.sf.l{background:var(--err)}
+
+/* ── STEPS ── */
+.sc{display:none}.sc.on{display:block;animation:fi .3s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── EXPORT ── */
+.exp-s{text-align:center;padding:28px}
+.exp-b{display:flex;justify-content:center;gap:12px;margin-top:18px;flex-wrap:wrap}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;padding:11px 18px;background:var(--ok);color:#fff;border-radius:var(--rs);font-weight:600;font-size:.85rem;z-index:999;opacity:0;transform:translateY(8px);transition:.3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ── FOOTER ── */
+.ftr{text-align:center;padding:40px 0 20px;color:var(--t4);font-size:.78rem}
+.ftr a{color:var(--acc);text-decoration:none}
+
+/* ── RESP ── */
+@media(max-width:640px){
+  .frow{grid-template-columns:1fr}.rg{grid-template-columns:1fr}.url-g{flex-direction:column}
+  .br{flex-direction:column}.nav{flex-wrap:wrap}.nav-t{font-size:.68rem;padding:8px 4px}
+  .hdr h1{font-size:1.5rem}.exp-b{flex-direction:column;align-items:center}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hdr">
+    <h1>ICP Discovery Engine</h1>
+    <p>Paste a company URL — get AI-powered market intelligence, structured qualification, and an exportable ICP report.</p>
+    <div class="badge">Powered by AI Research</div>
+  </header>
+
+  <nav class="nav" id="nav">
+    <div class="nav-t on" data-s="1" onclick="go(1)">1 · Research</div>
+    <div class="nav-t" data-s="2" onclick="go(2)">2 · Qualify</div>
+    <div class="nav-t" data-s="3" onclick="go(3)">3 · ICP Output</div>
+    <div class="nav-t" data-s="4" onclick="go(4)">4 · Export</div>
+  </nav>
+
+  <!-- ═══ STEP 1: RESEARCH ═══ -->
+  <section class="sc on" id="s1">
+    <div class="pnl">
+      <div class="ph"><div class="pi">🔍</div><div><div class="pt">Company Research</div><div class="ps">Paste a URL — AI analyzes the market, ecosystem, and competitive landscape</div></div></div>
+      <div class="fg">
+        <label class="fl">Company Website URL <span class="rq">*</span></label>
+        <div class="url-g">
+          <input type="url" id="url" placeholder="https://company.com">
+          <button class="btn bp" id="rbtn" onclick="doResearch()">⚡ Research</button>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fg">
+          <label class="fl">Target Geography</label>
+          <select id="geo">
+            <option value="">All Regions</option>
+            <option value="North America">North America</option>
+            <option value="EMEA">EMEA</option>
+            <option value="APAC">APAC</option>
+            <option value="LATAM">LATAM</option>
+            <option value="Israel">Israel</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Focus Sector</label>
+          <select id="sector">
+            <option value="">Auto-detect</option>
+            <option value="Cybersecurity">Cybersecurity</option>
+            <option value="FinTech">FinTech / Financial Services</option>
+            <option value="HealthTech">HealthTech / Healthcare</option>
+            <option value="Retail / E-Commerce">Retail / E-Commerce</option>
+            <option value="Manufacturing">Manufacturing / Industrial</option>
+            <option value="SaaS">SaaS / Cloud Software</option>
+            <option value="DevTools">DevTools / Developer Platforms</option>
+            <option value="AI / ML">AI / Machine Learning</option>
+            <option value="GovTech">GovTech / Defense</option>
+            <option value="EdTech">EdTech</option>
+            <option value="MarTech">MarTech / AdTech</option>
+            <option value="Logistics">Logistics / Supply Chain</option>
+            <option value="PropTech">PropTech / Real Estate</option>
+            <option value="Telecom">Telecom</option>
+            <option value="Energy">Energy / CleanTech</option>
+            <option value="HR Tech">HR Tech</option>
+            <option value="Legal Tech">Legal Tech</option>
+            <option value="Insurance">InsurTech</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="rs-box" id="rsBox">
+        <div><span class="dot" id="rdot"></span><span id="rsTxt">Analyzing...</span></div>
+        <div class="so" id="so"></div>
+      </div>
+    </div>
+
+    <div class="pnl" id="resPnl" style="display:none;border-color:rgba(59,130,246,.25);background:linear-gradient(135deg,rgba(59,130,246,.03),rgba(6,182,212,.02))">
+      <div class="ph"><div class="pi">📊</div><div><div class="pt" id="cName">Company Analysis</div><div class="ps">AI-generated market intelligence</div></div></div>
+      <div class="rg" id="resGrid"></div>
+      <div id="resNarr" style="margin-top:14px"></div>
+    </div>
+
+    <div class="br" id="s1btns" style="display:none">
+      <div></div>
+      <button class="btn bp" onclick="go(2)">Continue to Qualification →</button>
+    </div>
+  </section>
+
+  <!-- ═══ STEP 2: QUALIFY ═══ -->
+  <section class="sc" id="s2">
+    <div class="pnl">
+      <div class="ph"><div class="pi">📋</div><div><div class="pt">ICP Qualification</div><div class="ps">Answer based on what you know — the engine builds the ICP profile</div></div></div>
+
+      <div class="qs"><div class="qsh"><h3>🏢 Firmographics</h3></div>
+        <div class="qi"><label>Company Size (Employees)</label><select id="q_emp" onchange="uc()"><option value="">Select...</option><option value="1-50">1–50 (Startup)</option><option value="51-200">51–200 (Growth)</option><option value="201-1000">201–1,000 (Mid-Market)</option><option value="1001-5000">1,001–5,000 (Upper Mid-Market)</option><option value="5001-10000">5,001–10,000 (Enterprise)</option><option value="10001+">10,001+ (Large Enterprise)</option></select></div>
+        <div class="qi"><label>Annual Revenue</label><select id="q_rev" onchange="uc()"><option value="">Select...</option><option value="Pre-Revenue">Pre-Revenue</option><option value="Under $5M">Under $5M</option><option value="$5M-$25M">$5M–$25M</option><option value="$25M-$100M">$25M–$100M</option><option value="$100M-$500M">$100M–$500M</option><option value="$500M-$1B">$500M–$1B</option><option value="$1B+">$1B+</option></select></div>
+        <div class="qi"><label>Funding Stage</label><select id="q_fund" onchange="uc()"><option value="">Select...</option><option value="Bootstrapped">Bootstrapped</option><option value="Seed">Seed</option><option value="Series A">Series A</option><option value="Series B">Series B</option><option value="Series C+">Series C+</option><option value="PE-Backed">PE-Backed</option><option value="Public">Publicly Traded</option></select></div>
+        <div class="qi"><label>Primary Geography</label><select id="q_geo" onchange="uc()"><option value="">Select...</option><option value="US">United States</option><option value="Canada">Canada</option><option value="UK">United Kingdom</option><option value="EU">EU / Continental Europe</option><option value="Israel">Israel</option><option value="APAC">APAC</option><option value="LATAM">LATAM</option><option value="Global">Global / Multi-Region</option></select></div>
+      </div>
+
+      <div class="qs"><div class="qsh"><h3>⚙️ Technographics</h3></div>
+        <div class="qi"><label>Infrastructure Model</label><select id="q_infra" onchange="uc()"><option value="">Select...</option><option value="Cloud-Native">Cloud-Native (AWS/Azure/GCP)</option><option value="Multi-Cloud">Multi-Cloud</option><option value="Hybrid">Hybrid (Cloud + On-Prem)</option><option value="On-Prem">Primarily On-Premises</option><option value="Legacy">Legacy / Mainframe</option></select></div>
+        <div class="qi"><label>Development Methodology</label><select id="q_dev" onchange="uc()"><option value="">Select...</option><option value="DevOps">DevOps / CI-CD</option><option value="DevSecOps">DevSecOps</option><option value="Agile">Agile</option><option value="Waterfall">Waterfall / Traditional</option><option value="None">No formal engineering</option></select></div>
+        <div class="qi"><label>Tech Stack Maturity</label><select id="q_mat" onchange="uc()"><option value="">Select...</option><option value="Cutting Edge">Cutting Edge (containers, serverless, AI-native)</option><option value="Modern">Modern (microservices, cloud, APIs)</option><option value="Transitioning">Transitioning (migrating to cloud)</option><option value="Legacy-Heavy">Legacy-Heavy (monolithic, on-prem)</option></select></div>
+      </div>
+
+      <div class="qs"><div class="qsh"><h3>🔥 Pain Points & Triggers</h3></div>
+        <div class="qi"><label>Primary Pain Point</label><select id="q_pain" onchange="uc()"><option value="">Select...</option><option value="Security incident">Security incident / breach response</option><option value="Compliance mandate">Compliance mandate (regulatory deadline)</option><option value="Cost reduction">Cost reduction / vendor consolidation</option><option value="Scaling">Scaling challenges (outgrown current tools)</option><option value="Modernization">Digital transformation / modernization</option><option value="Talent shortage">Talent shortage / operational efficiency</option><option value="Competitive pressure">Competitive pressure</option><option value="Customer demand">Customer / partner requirement</option></select></div>
+        <div class="qi"><label>Urgency Level</label><select id="q_urg" onchange="uc()"><option value="">Select...</option><option value="Critical">Critical — active incident or deadline within 30 days</option><option value="High">High — committed budget, buying this quarter</option><option value="Medium">Medium — evaluating, next 2 quarters</option><option value="Low">Low — exploring, no timeline</option><option value="Informational">Informational only</option></select></div>
+        <div class="qi"><label>Compliance Frameworks</label><select id="q_comp" onchange="uc()"><option value="">Select...</option><option value="SOC 2">SOC 2</option><option value="PCI DSS">PCI DSS</option><option value="HIPAA">HIPAA</option><option value="FedRAMP">FedRAMP</option><option value="CMMC 2.0">CMMC 2.0</option><option value="GDPR / NIS 2">GDPR / NIS 2</option><option value="ISO 27001">ISO 27001</option><option value="Multiple">Multiple frameworks</option><option value="None">None / Not applicable</option></select></div>
+      </div>
+
+      <div class="qs"><div class="qsh"><h3>🎯 Buying Committee</h3></div>
+        <div class="qi"><label>Primary Decision Maker</label><select id="q_dm" onchange="uc()"><option value="">Select...</option><option value="CISO">CISO / VP Security</option><option value="CTO">CTO / VP Engineering</option><option value="CIO">CIO / IT Director</option><option value="CFO">CFO / Finance</option><option value="CEO">CEO / GM</option><option value="DevOps Lead">DevOps / Platform Lead</option><option value="Procurement">Procurement</option></select></div>
+        <div class="qi"><label>Buying Committee Size</label><select id="q_cmte" onchange="uc()"><option value="">Select...</option><option value="1-2">1–2 (single decision-maker)</option><option value="3-5">3–5 (small committee)</option><option value="6-10">6–10 (cross-functional)</option><option value="10+">10+ (formal procurement)</option></select></div>
+        <div class="qi"><label>Budget Status</label><select id="q_bgt" onchange="uc()"><option value="">Select...</option><option value="Approved">Approved and allocated</option><option value="Pending">Approved, pending allocation</option><option value="Requested">Budget request in progress</option><option value="None">No budget allocated</option><option value="Unknown">Unknown</option></select></div>
+        <div class="qi"><label>Evaluating Competitors?</label><select id="q_cmp" onchange="uc()"><option value="">Select...</option><option value="Sole vendor">No — sole vendor</option><option value="Informal eval">Yes — informal evaluation</option><option value="Active RFP">Yes — active RFP / bake-off</option><option value="Incumbent renewal">Incumbent vendor renewal</option><option value="Unknown">Unknown</option></select></div>
+      </div>
+
+      <div class="fg"><label class="fl">Additional Notes</label><textarea id="q_notes" placeholder="Anything else relevant about this prospect..."></textarea></div>
+    </div>
+    <div class="br">
+      <button class="btn bs" onclick="go(1)">← Back</button>
+      <button class="btn bp" onclick="genICP()">Generate ICP Profile →</button>
+    </div>
+  </section>
+
+  <!-- ═══ STEP 3: ICP OUTPUT ═══ -->
+  <section class="sc" id="s3">
+    <div class="pnl" style="border-color:rgba(59,130,246,.25);background:linear-gradient(135deg,rgba(59,130,246,.03),rgba(6,182,212,.02))">
+      <div class="ph"><div class="pi">🎯</div><div><div class="pt">Generated ICP Profile</div><div class="ps" id="icpSub">AI + qualification data combined</div></div></div>
+      <div id="icpScore"></div>
+      <div id="icpOut" style="margin-top:16px"></div>
+    </div>
+    <div class="br">
+      <button class="btn bs" onclick="go(2)">← Edit Answers</button>
+      <button class="btn bp" onclick="go(4)">Export Report →</button>
+    </div>
+  </section>
+
+  <!-- ═══ STEP 4: EXPORT ═══ -->
+  <section class="sc" id="s4">
+    <div class="pnl exp-s">
+      <div class="pi" style="margin:0 auto 14px;width:52px;height:52px;font-size:1.6rem">📤</div>
+      <div class="pt" style="font-size:1.2rem;margin-bottom:6px">Export Your ICP Report</div>
+      <p style="color:var(--t3);max-width:440px;margin:0 auto;font-size:.88rem">Download as PDF or copy to clipboard for CRM, Slack, or email.</p>
+      <div class="exp-b">
+        <button class="btn bp" onclick="dlPDF()">📄 Download PDF</button>
+        <button class="btn bg" onclick="cpClip()">📋 Copy to Clipboard</button>
+      </div>
+      <div id="expSt" style="margin-top:14px;color:var(--t4);font-size:.82rem"></div>
+    </div>
+    <div class="br">
+      <button class="btn bs" onclick="go(3)">← Back to ICP</button>
+      <button class="btn bw" onclick="resetAll()">🔄 New Research</button>
+    </div>
+  </section>
+
+  <footer class="ftr">
+    ICP Discovery Engine · Built for B2B sales teams
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ STATE ═══
+let RD=null,ICP=null,cs=1;
+
+// ═══ NAV ═══
+function go(n){cs=n;document.querySelectorAll('.sc').forEach(e=>e.classList.remove('on'));document.getElementById('s'+n).classList.add('on');document.querySelectorAll('.nav-t').forEach(e=>{e.classList.remove('on');if(+e.dataset.s===n)e.classList.add('on')});window.scrollTo({top:0,behavior:'smooth'})}
+function done(n){document.querySelector(`.nav-t[data-s="${n}"]`).classList.add('done')}
+
+// ═══ API CALL (server-side proxy) ═══
+async function callAPI(endpoint, body) {
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error || `API error ${resp.status}`);
+  }
+  return resp.json();
+}
+
+// ═══ RESEARCH ═══
+async function doResearch(){
+  const url=document.getElementById('url').value.trim();
+  if(!url){toast('Please enter a company URL');return}
+  const geo=document.getElementById('geo').value;
+  const sector=document.getElementById('sector').value;
+  const btn=document.getElementById('rbtn');
+  const box=document.getElementById('rsBox');
+  const txt=document.getElementById('rsTxt');
+  const so=document.getElementById('so');
+
+  btn.disabled=true;btn.textContent='⏳ Researching...';
+  box.classList.add('on');txt.textContent='Analyzing '+url+'...';so.textContent='';
+
+  const geoCtx=geo?`\nFocus geography: ${geo}`:'';
+  const secCtx=sector?`\nFocus sector: ${sector}`:'';
+
+  const systemPrompt=`You are a senior B2B market research analyst. Given a company URL, produce structured analysis. Be specific and data-driven.
+
+RESPOND ONLY IN VALID JSON (no markdown, no backticks):
+{
+  "company_name":"string",
+  "one_liner":"What they do in one sentence",
+  "sector":"Primary sector",
+  "sub_sector":"Sub-sector",
+  "founded":"Year",
+  "hq_location":"City, Country",
+  "estimated_employees":"range",
+  "estimated_revenue":"range",
+  "funding_stage":"string",
+  "total_funding":"string",
+  "target_market":"Who they sell to",
+  "market_size_tam":"TAM estimate",
+  "market_growth_rate":"CAGR",
+  "key_trends":["trend1","trend2","trend3","trend4","trend5"],
+  "competitors":[{"name":"string","why_they_compete":"string","key_advantage":"string"}],
+  "ideal_customer_profile":{
+    "company_size":"employee range",
+    "revenue_range":"revenue range",
+    "industries":["ind1","ind2","ind3"],
+    "job_titles_buyers":["title1","title2","title3"],
+    "pain_points":["pain1","pain2","pain3"],
+    "compliance_drivers":["framework1","framework2"],
+    "tech_stack_signals":["signal1","signal2"],
+    "buying_triggers":["trigger1","trigger2","trigger3"]
+  },
+  "geo_insights":"Regional dynamics",
+  "strategic_summary":"2-3 sentence assessment"
+}`;
+
+  try{
+    const data = await callAPI('/api/research', {
+      system: systemPrompt,
+      messages: [{ role:'user', content:`Research this company: ${url}${geoCtx}${secCtx}\n\nProvide comprehensive B2B market intelligence including ICP benchmark based on market position, competitors, and ecosystem.` }],
+      tools: [{ type:'web_search_20250305', name:'web_search' }]
+    });
+
+    txt.textContent='Processing results...';
+    let ft='';
+    if(data.content) for(const b of data.content) if(b.type==='text') ft+=b.text;
+    so.textContent=ft.substring(0,2000);
+
+    let parsed;
+    try{parsed=JSON.parse(ft.replace(/```json|```/g,'').trim())}
+    catch(e){const m=ft.match(/\{[\s\S]*\}/);if(m)parsed=JSON.parse(m[0]);else throw new Error('Parse error')}
+
+    RD=parsed;
+    showRes(parsed);
+    done(1);
+    document.getElementById('s1btns').style.display='flex';
+    txt.textContent='✅ Research complete!';
+    document.getElementById('rdot').style.animation='none';
+    document.getElementById('rdot').style.background='var(--ok)';
+  }catch(err){
+    txt.textContent='⚠️ Research had an issue — you can proceed with manual qualification.';
+    so.textContent='Error: '+err.message;
+    document.getElementById('s1btns').style.display='flex';
+    RD={company_name:url,error:true};
+  }
+  btn.disabled=false;btn.textContent='⚡ Research';
+}
+
+function showRes(d){
+  const pnl=document.getElementById('resPnl');
+  document.getElementById('cName').textContent=d.company_name||'Company Analysis';
+
+  const cards=[['Sector',d.sector+(d.sub_sector?' / '+d.sub_sector:''),'🏷️'],['Founded',d.founded||'N/A','📅'],['HQ',d.hq_location||'N/A','📍'],['Employees',d.estimated_employees||'N/A','👥'],['Revenue',d.estimated_revenue||'N/A','💰'],['Funding',(d.funding_stage||'')+(d.total_funding?' ('+d.total_funding+')':''),'🏦'],['TAM',d.market_size_tam||'N/A','📈'],['Growth',d.market_growth_rate||'N/A','🚀']];
+  document.getElementById('resGrid').innerHTML=cards.map(([l,v,i])=>`<div class="rc"><div class="rc-l">${i} ${l}</div><div class="rc-v">${v}</div></div>`).join('');
+
+  let h='';
+  if(d.key_trends?.length)h+=`<div style="margin-top:14px"><strong style="color:var(--acc)">Market Trends:</strong><div style="margin-top:6px">${d.key_trends.map(t=>`<span class="tag tb">${t}</span>`).join('')}</div></div>`;
+
+  if(d.competitors?.length)h+=`<div style="margin-top:14px"><strong style="color:var(--acc)">Competitors:</strong>${d.competitors.map(c=>`<div style="padding:8px 12px;background:var(--s2);border-radius:6px;margin-top:6px;border-left:3px solid var(--acc2)"><strong>${c.name}</strong> <span style="color:var(--t4);font-size:.8rem">— ${c.why_they_compete}</span><div style="font-size:.8rem;color:var(--t3);margin-top:2px">Advantage: ${c.key_advantage}</div></div>`).join('')}</div>`;
+
+  if(d.ideal_customer_profile){const i=d.ideal_customer_profile;h+=`<div style="margin-top:18px;padding:14px;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.12);border-radius:8px"><strong style="color:var(--acc)">📎 AI-Suggested ICP Benchmark</strong><div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.85rem"><div><span style="color:var(--t4)">Size:</span> ${i.company_size||'N/A'}</div><div><span style="color:var(--t4)">Revenue:</span> ${i.revenue_range||'N/A'}</div><div><span style="color:var(--t4)">Industries:</span> ${(i.industries||[]).join(', ')}</div><div><span style="color:var(--t4)">Buyers:</span> ${(i.job_titles_buyers||[]).join(', ')}</div></div>${i.pain_points?'<div style="margin-top:6px">'+i.pain_points.map(p=>`<span class="tag to">${p}</span>`).join('')+'</div>':''}${i.buying_triggers?'<div style="margin-top:4px">'+i.buying_triggers.map(t=>`<span class="tag tg">${t}</span>`).join('')+'</div>':''}</div>`}
+
+  if(d.strategic_summary)h+=`<div style="margin-top:14px;padding:12px;background:var(--s2);border-radius:8px;border-left:3px solid var(--ok);font-size:.88rem;color:var(--t3)"><strong style="color:var(--ok)">Strategic Summary:</strong> ${d.strategic_summary}</div>`;
+
+  document.getElementById('resNarr').innerHTML=h;
+  pnl.style.display='block';
+}
+
+// ═══ SCORING ═══
+function uc(){}
+
+function calcScore(q){
+  let f=0,bd={};
+  const ss={'1-50':5,'51-200':10,'201-1000':15,'1001-5000':20,'5001-10000':25,'10001+':25};
+  bd.size=ss[q.emp]||0;f+=bd.size;
+  const rs={'Pre-Revenue':2,'Under $5M':5,'$5M-$25M':10,'$25M-$100M':15,'$100M-$500M':20,'$500M-$1B':22,'$1B+':25};
+  bd.revenue=rs[q.rev]||0;f+=bd.revenue;
+  const us={'Critical':20,'High':16,'Medium':10,'Low':5,'Informational':2};
+  bd.urgency=us[q.urg]||0;f+=bd.urgency;
+  const bs={'Approved':15,'Pending':12,'Requested':8,'None':3,'Unknown':5};
+  bd.budget=bs[q.bgt]||0;f+=bd.budget;
+  const ps={'Security incident':15,'Compliance mandate':14,'Scaling':12,'Modernization':10,'Cost reduction':8,'Competitive pressure':8,'Talent shortage':6,'Customer demand':10};
+  bd.pain=ps[q.pain]||0;f+=bd.pain;
+  const pct=Math.min(Math.round(f/100*100),100);
+  return{total:f,max:100,pct,grade:pct>=75?'A':pct>=55?'B':pct>=35?'C':'D',bd,label:pct>=75?'Strong Fit':pct>=55?'Good Fit':pct>=35?'Moderate Fit':'Low Fit',clr:pct>=75?'h':pct>=55?'m':'l'}
+}
+
+// ═══ GENERATE ICP ═══
+async function genICP(){
+  const q={emp:v('q_emp'),rev:v('q_rev'),fund:v('q_fund'),geo:v('q_geo'),infra:v('q_infra'),dev:v('q_dev'),mat:v('q_mat'),pain:v('q_pain'),urg:v('q_urg'),comp:v('q_comp'),dm:v('q_dm'),cmte:v('q_cmte'),bgt:v('q_bgt'),cmp:v('q_cmp'),notes:v('q_notes')};
+  const s=calcScore(q);
+  ICP={research:RD,qual:q,scores:s};
+  showICP(ICP);
+  done(2);go(3);
+  await aiNarr(ICP);
+  done(3);
+}
+function v(id){return document.getElementById(id).value}
+
+function showICP(p){
+  const s=p.scores,q=p.qual,r=p.research||{};
+  const clrMap={h:'var(--ok)',m:'var(--wrn)',l:'var(--err)'};
+
+  let sh=`<div style="display:flex;align-items:center;gap:18px;padding:18px;background:var(--s2);border-radius:10px;border:1px solid var(--bdr);margin-bottom:18px"><div style="width:72px;height:72px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;border:3px solid ${clrMap[s.clr]};flex-shrink:0"><div style="text-align:center"><div style="font-family:var(--m);font-size:1.4rem;font-weight:700;color:${clrMap[s.clr]}">${s.pct}%</div></div></div><div><div style="font-size:1.1rem;font-weight:700">${s.label}</div><div style="color:var(--t4);font-size:.85rem">Grade: ${s.grade} · Score: ${s.total}/${s.max}</div></div></div>`;
+
+  sh+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:18px">${[['Size',s.bd.size,25],['Revenue',s.bd.revenue,25],['Urgency',s.bd.urgency,20],['Budget',s.bd.budget,15],['Pain Fit',s.bd.pain,15]].map(([l,v,m])=>{const p=Math.round(v/m*100),c=p>=70?'h':p>=40?'m':'l';return`<div style="text-align:center;padding:8px;background:var(--s2);border-radius:8px"><div style="font-size:.68rem;color:var(--t4);margin-bottom:3px">${l}</div><div class="sf-bg"><div class="sf ${c}" style="width:${p}%"></div></div><div style="font-family:var(--m);font-size:.74rem;font-weight:700;margin-top:3px">${v}/${m}</div></div>`}).join('')}</div>`;
+
+  document.getElementById('icpScore').innerHTML=sh;
+  document.getElementById('icpSub').textContent=r.company_name||document.getElementById('url').value;
+
+  let oh=`<div id="aiNarr" style="padding:14px;background:var(--s2);border-radius:8px;border:1px solid var(--bdr)"><div style="display:flex;align-items:center;gap:7px"><span class="dot"></span><span style="font-size:.85rem;color:var(--t4)">Generating AI narrative...</span></div></div>`;
+
+  oh+=`<div class="rg" style="margin-top:14px">${[['👥 Size',q.emp],['💰 Revenue',q.rev],['🌍 Geography',q.geo],['🔥 Pain',q.pain],['⏱️ Urgency',q.urg],['💳 Budget',q.bgt],['🎯 DM',q.dm],['📋 Compliance',q.comp]].map(([l,v])=>`<div class="rc"><div class="rc-l">${l}</div><div class="rc-v">${v||'Not specified'}</div></div>`).join('')}</div>`;
+
+  document.getElementById('icpOut').innerHTML=oh;
+}
+
+async function aiNarr(p){
+  const r=p.research||{},q=p.qual,s=p.scores;
+  const prompt=`Based on this research and qualification data, write a concise ICP report. Be direct and actionable.
+
+COMPANY: ${r.company_name||'Unknown'}
+SECTOR: ${r.sector||'Unknown'}
+RESEARCH: ${JSON.stringify(r).substring(0,2000)}
+QUALIFICATION: ${JSON.stringify(q)}
+SCORE: ${s.pct}% (${s.label})
+
+Write these sections (use ## headers):
+## ICP Summary
+2-3 sentence ideal customer profile.
+## Target Buyer Persona
+Specific titles, departments, motivations.
+## Key Pain Points to Address
+3-4 resonant pain points from market + qualification data.
+## Recommended Sales Approach
+How to approach, messaging, expected objections.
+## Competitive Positioning
+Differentiation against main competitors.
+## Geographic & Sector Strategy
+Specific geo and sector recommendations.`;
+
+  try{
+    const data = await callAPI('/api/generate-icp', {
+      messages: [{ role:'user', content:prompt }]
+    });
+    let t=data.content?.map(b=>b.type==='text'?b.text:'').join('')||'';
+    ICP.narrativeRaw=t;
+    t=t.replace(/## (.*)/g,'<h3 style="color:var(--acc);margin:18px 0 6px;font-size:.95rem">$1</h3>');
+    t=t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    t=t.replace(/\n\n/g,'</p><p style="margin-bottom:8px;color:var(--t3);font-size:.87rem;line-height:1.7">');
+    t='<p style="margin-bottom:8px;color:var(--t3);font-size:.87rem;line-height:1.7">'+t+'</p>';
+    ICP.narrative=t;
+    document.getElementById('aiNarr').innerHTML=t;
+  }catch(e){
+    document.getElementById('aiNarr').innerHTML=`<div style="color:var(--wrn)">AI narrative had an issue. Scoring and data above remain valid.</div>`;
+  }
+}
+
+// ═══ EXPORT PDF ═══
+function dlPDF(){
+  const{jsPDF}=window.jspdf;const doc=new jsPDF();
+  const r=ICP?.research||{},q=ICP?.qual||{},s=ICP?.scores||{},n=ICP?.narrativeRaw||'';
+  let y=20;const M=20,W=170;
+  doc.setFontSize(20);doc.setTextColor(30,64,175);doc.text('ICP Discovery Report',M,y);y+=10;
+  doc.setFontSize(10);doc.setTextColor(100);doc.text(r.company_name||document.getElementById('url').value||'Company',M,y);y+=5;
+  doc.text('Generated: '+new Date().toLocaleDateString(),M,y);y+=10;
+  doc.setFontSize(14);doc.setTextColor(0);doc.text(`Fit Score: ${s.pct||0}% (${s.label||'N/A'}) — Grade: ${s.grade||'N/A'}`,M,y);y+=10;
+  doc.setDrawColor(200);doc.line(M,y,M+W,y);y+=8;
+  doc.setFontSize(12);doc.setTextColor(30,64,175);doc.text('Qualification Summary',M,y);y+=7;
+  doc.setFontSize(9);doc.setTextColor(60);
+  [['Employees',q.emp],['Revenue',q.rev],['Funding',q.fund],['Geography',q.geo],['Infrastructure',q.infra],['Pain',q.pain],['Urgency',q.urg],['Compliance',q.comp],['Decision Maker',q.dm],['Budget',q.bgt],['Competition',q.cmp]].forEach(([l,v])=>{if(v){doc.text(`${l}: ${v}`,M,y);y+=5;if(y>270){doc.addPage();y=20}}});
+  y+=5;
+  if(n){doc.setDrawColor(200);doc.line(M,y,M+W,y);y+=8;const ct=n.replace(/## /g,'\n').replace(/\*\*/g,'').replace(/\n{3,}/g,'\n\n');const lines=doc.splitTextToSize(ct,W);doc.setFontSize(9);doc.setTextColor(40);lines.forEach(l=>{if(y>275){doc.addPage();y=20}doc.text(l,M,y);y+=4.5})}
+  doc.save(`ICP_Report_${(r.company_name||'Company').replace(/\s+/g,'_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+  toast('PDF downloaded!');
+}
+
+// ═══ CLIPBOARD ═══
+function cpClip(){
+  const r=ICP?.research||{},q=ICP?.qual||{},s=ICP?.scores||{},n=ICP?.narrativeRaw||'';
+  const t=`ICP DISCOVERY REPORT\n${'='.repeat(40)}\nCompany: ${r.company_name||'N/A'}\nSector: ${r.sector||'N/A'}\nDate: ${new Date().toLocaleDateString()}\n\nFIT SCORE: ${s.pct||0}% (${s.label||'N/A'}) — Grade: ${s.grade||'N/A'}\n\nQUALIFICATION\n• Employees: ${q.emp||'N/A'}\n• Revenue: ${q.rev||'N/A'}\n• Funding: ${q.fund||'N/A'}\n• Geography: ${q.geo||'N/A'}\n• Infrastructure: ${q.infra||'N/A'}\n• Pain Point: ${q.pain||'N/A'}\n• Urgency: ${q.urg||'N/A'}\n• Compliance: ${q.comp||'N/A'}\n• Decision Maker: ${q.dm||'N/A'}\n• Budget: ${q.bgt||'N/A'}\n• Competition: ${q.cmp||'N/A'}\n${q.notes?'\nNotes: '+q.notes:''}\n\n${n?'AI ANALYSIS\n'+'='.repeat(40)+'\n'+n:''}`;
+  navigator.clipboard.writeText(t).then(()=>toast('Copied to clipboard!')).catch(()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');document.body.removeChild(a);toast('Copied!')});
+}
+
+// ═══ RESET ═══
+function resetAll(){RD=null;ICP=null;document.querySelectorAll('select').forEach(s=>s.value='');document.querySelectorAll('input').forEach(i=>i.value='');document.querySelectorAll('textarea').forEach(t=>t.value='');document.querySelectorAll('.nav-t').forEach(t=>t.classList.remove('done'));document.getElementById('resPnl').style.display='none';document.getElementById('rsBox').classList.remove('on');document.getElementById('s1btns').style.display='none';go(1);toast('Reset — ready for new research')}
+
+// ═══ TOAST ═══
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+document.getElementById('url').addEventListener('keydown',e=>{if(e.key==='Enter')doResearch()});
+</script>
+</body>
+</html>
