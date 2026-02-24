@@ -230,6 +230,7 @@ textarea{resize:vertical;min-height:70px}
       <div class="exp-b">
         <button class="btn bp" onclick="dlPDF()">📄 Download PDF</button>
         <button class="btn bg" onclick="cpClip()">📋 Copy to Clipboard</button>
+        <button class="btn bw" onclick="dlJSON()">🤖 Export JSON (for AI Agent)</button>
         <button class="btn bv" onclick="go(3)">🎛️ Refine & Regenerate</button>
       </div>
     </div>
@@ -415,12 +416,125 @@ The 3-5 most actionable things the company can do in the next 30-60 days to star
     REPORT=t;
     document.getElementById('reportContent').innerHTML=t;
     done(3);done(4);
+    // Auto-send JSON to email
+    sendJSONEmail();
   }catch(e){
     document.getElementById('reportContent').innerHTML=`<div style="color:var(--wrn);padding:16px">⚠️ Report generation encountered an issue: ${e.message}. Try again or adjust your filters.</div>`;
   }
 }
 
+// ═══ AUTO-EMAIL JSON ═══
+async function sendJSONEmail(){
+  try{
+    const json=buildExportJSON();
+    const companyName=json.company.name||'Unknown';
+    const date=new Date().toISOString().split('T')[0];
+    await callAPI('/api/send-report',{
+      to:'michael.saggi1@gmail.com',
+      subject:`ICP Report: ${companyName} — ${date}`,
+      company_name:companyName,
+      json_data:json
+    });
+    toast('📧 JSON report emailed automatically');
+  }catch(e){
+    console.error('Email send failed:',e);
+    // Silent fail — don't block the user experience
+  }
+}
+
 // ═══ EXPORT ═══
+function buildExportJSON(){
+  const r=RD||{};
+  const filters={
+    target_customer_size:document.getElementById('f_size').value||null,
+    target_geography:document.getElementById('f_geo').value||null,
+    target_vertical:document.getElementById('f_vertical').value||null,
+    target_buyer:document.getElementById('f_buyer').value||null,
+    sales_motion:document.getElementById('f_motion').value||null,
+    additional_context:document.getElementById('f_context').value||null,
+  };
+  // Parse strategy report into sections
+  const sections={};
+  if(REPORT_RAW){
+    const parts=REPORT_RAW.split(/^## /m).filter(Boolean);
+    parts.forEach(part=>{
+      const nl=part.indexOf('\n');
+      if(nl>-1){
+        const key=part.substring(0,nl).trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+        sections[key]=part.substring(nl+1).trim();
+      }
+    });
+  }
+  return {
+    _meta:{
+      schema_version:"1.0",
+      tool:"icp_discovery_engine",
+      generated_at:new Date().toISOString(),
+      purpose:"Structured ICP data for downstream LLM agent tasks",
+    },
+    company:{
+      name:r.company_name||null,
+      url:document.getElementById('url').value.trim()||null,
+      one_liner:r.one_liner||null,
+      sector:r.sector||null,
+      sub_sector:r.sub_sector||null,
+      founded:r.founded||null,
+      hq_location:r.hq_location||null,
+      estimated_employees:r.estimated_employees||null,
+      estimated_revenue:r.estimated_revenue||null,
+      funding_stage:r.funding_stage||null,
+      total_funding:r.total_funding||null,
+      value_proposition:r.value_proposition||null,
+      target_market:r.target_market||null,
+    },
+    market:{
+      tam:r.market_size_tam||null,
+      growth_rate:r.market_growth_rate||null,
+      key_trends:r.key_trends||[],
+      geo_insights:r.geo_insights||null,
+      strategic_summary:r.strategic_summary||null,
+    },
+    competitors:(r.competitors||[]).map(c=>({
+      name:c.name,
+      positioning:c.positioning,
+      key_advantage:c.key_advantage,
+    })),
+    suggested_icp:{
+      company_size:r.suggested_icp?.company_size||null,
+      revenue_range:r.suggested_icp?.revenue_range||null,
+      target_industries:r.suggested_icp?.industries||[],
+      buyer_titles:r.suggested_icp?.job_titles_buyers||[],
+      pain_points:r.suggested_icp?.pain_points||[],
+      buying_triggers:r.suggested_icp?.buying_triggers||[],
+      tech_signals:r.suggested_icp?.tech_signals||[],
+    },
+    filters_applied:filters,
+    strategy_report:{
+      raw_text:REPORT_RAW||null,
+      sections:sections,
+    },
+    agent_tasks:[
+      {task:"outbound_sequence",description:"Generate a 5-touch outbound email/LinkedIn sequence targeting the buyer personas identified in the ICP",inputs:["company","suggested_icp","strategy_report.sections.target_buyer_personas"]},
+      {task:"battlecard_generation",description:"Create detailed competitive battlecards for each competitor",inputs:["competitors","strategy_report.sections.competitive_battlecard"]},
+      {task:"content_brief",description:"Write content marketing briefs targeting the ICP pain points",inputs:["suggested_icp.pain_points","market.key_trends","strategy_report.sections.key_messaging_framework"]},
+      {task:"account_list_building",description:"Build a target account list matching the ICP criteria",inputs:["suggested_icp","filters_applied"]},
+      {task:"discovery_call_prep",description:"Generate discovery call scripts and qualification questions for the target personas",inputs:["suggested_icp","strategy_report.sections.ideal_customer_profile","strategy_report.sections.target_buyer_personas"]},
+      {task:"roi_calculator",description:"Build an ROI model based on the pain points and market data",inputs:["suggested_icp.pain_points","market","company.value_proposition"]},
+    ]
+  };
+}
+
+function dlJSON(){
+  const json=buildExportJSON();
+  const blob=new Blob([JSON.stringify(json,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`ICP_${(json.company.name||'Company').replace(/\s+/g,'_')}_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('JSON exported for AI agent!');
+}
+
 function dlPDF(){
   const{jsPDF}=window.jspdf;const doc=new jsPDF();
   const r=RD||{};let y=20;const M=20,W=170;
