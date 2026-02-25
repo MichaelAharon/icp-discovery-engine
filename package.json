@@ -1,17 +1,19 @@
 {
   "name": "icp-discovery-engine",
   "version": "2.0.0",
-  "description": "AI-powered ICP Discovery Engine with auto-email JSON export",
+  "description": "ICP Discovery Engine for Askit.ai",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "helmet": "^8.0.0",
+    "express-rate-limit": "^7.4.0"
+  },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.21.0",
-    "nodemailer": "^6.9.0"
   }
 }
