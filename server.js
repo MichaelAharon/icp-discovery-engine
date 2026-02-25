@@ -149,7 +149,7 @@ CRITICAL SOURCING RULES:
 - Include the date of the information when available.
 
 OUTPUT RULES:
-- CRITICAL: Output ONLY valid HTML. NEVER use markdown syntax (no ##, ###, **, -, ```). ONLY use HTML tags.
+- CRITICAL: Output ONLY valid HTML. NEVER use markdown syntax (no ##, ###, **, -, triple backticks). ONLY use HTML tags.
 - Use <h3> for section headers, <h4> for sub-headers, <p> for paragraphs, <ul>/<li> for lists, <table> for data, <blockquote> for quotes, <strong> for bold, <em> for emphasis.
 - NEVER start your response with preamble like "Based on my research..." — go straight into the HTML content starting with <h3>.
 - Be ACTIONABLE — talk tracks, questions, pile-on statements.
