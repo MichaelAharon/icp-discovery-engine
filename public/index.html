@@ -3,564 +3,379 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ICP Discovery Engine</title>
-<meta name="description" content="Discover your Ideal Customer Profile. AI-powered market research, ICP generation, GTM strategy, and competitive positioning.">
+<title>Askit.ai — MEDDIC Intelligence Engine</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <style>
-*,:before,:after{margin:0;padding:0;box-sizing:border-box}
-:root{
---bg:#06080f;--s1:#0c1220;--s2:#131c30;--s3:#1a2540;--s4:#223050;
---bdr:#1e2d4a;--bdr2:#2a3d5e;--bdr-f:#3b82f6;
---t1:#f1f5f9;--t2:#cbd5e1;--t3:#94a3b8;--t4:#64748b;
---acc:#3b82f6;--acc2:#06b6d4;--acc3:#8b5cf6;
---ok:#10b981;--wrn:#f59e0b;--err:#ef4444;
---g1:linear-gradient(135deg,#3b82f6,#06b6d4);--g2:linear-gradient(135deg,#3b82f6,#8b5cf6);
---r:14px;--rs:8px;
---f:'DM Sans',system-ui,sans-serif;--m:'JetBrains Mono',monospace;
-}
-html{scroll-behavior:smooth}
-body{font-family:var(--f);background:var(--bg);color:var(--t1);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
-::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");background-size:200px;opacity:.4}
-.wrap{max-width:900px;margin:0 auto;padding:20px 16px 100px;position:relative;z-index:1}
+:root{--bg:#06060e;--card:rgba(255,255,255,0.035);--border:rgba(255,255,255,0.07);--hover:rgba(255,255,255,0.06);--t1:#f4f2ff;--t2:#9d97b8;--t3:#504a6b;--violet:#a78bfa;--vb:#c4b5fd;--vg:rgba(167,139,250,0.12);--cyan:#67e8f9;--cg:rgba(103,232,249,0.10);--rose:#fb7185;--rg:rgba(251,113,133,0.10);--lime:#a3e635;--lg:rgba(163,230,53,0.10);--amber:#fbbf24;--ag:rgba(251,191,36,0.10);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--t1);font-family:'Outfit',sans-serif;min-height:100vh;}
+.orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0;}
+.orb-1{width:600px;height:600px;background:radial-gradient(circle,rgba(167,139,250,0.1),transparent 70%);top:-200px;left:-100px;}
+.orb-2{width:500px;height:500px;background:radial-gradient(circle,rgba(103,232,249,0.07),transparent 70%);bottom:-150px;right:-100px;}
+.app{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:0 32px;}
 
-/* HEADER */
-.hdr{text-align:center;padding:48px 0 32px;position:relative}
-.hdr::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:2px;background:var(--g1);border-radius:2px}
-.hdr h1{font-size:2rem;font-weight:700;letter-spacing:-.6px;background:var(--g1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
-.hdr p{color:var(--t3);font-size:.92rem;max-width:560px;margin:0 auto}
-.hdr .badge{display:inline-block;margin-top:10px;padding:4px 14px;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--acc2);background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:20px}
+/* Header */
+.header{padding:36px 0 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.logo-row{display:flex;align-items:center;gap:12px;}
+.logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--violet),var(--cyan));border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:var(--bg);}
+.logo-stack h1{font-size:20px;font-weight:700;background:linear-gradient(135deg,var(--vb),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo-stack p{font-size:11px;color:var(--t3);margin-top:1px;}
+.badge-row{display:flex;gap:8px;align-items:center;}
+.badge{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);padding:6px 14px;border-radius:100px;font-size:11px;color:var(--t2);font-weight:500;}
+.dot{width:6px;height:6px;border-radius:50%;animation:pulse 2s ease infinite;}
+.dot.g{background:var(--lime);box-shadow:0 0 8px var(--lime);}
+.dot.a{background:var(--amber);box-shadow:0 0 8px var(--amber);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 
-/* NAV */
-.nav{display:flex;gap:3px;margin-bottom:24px;padding:4px;background:var(--s1);border-radius:var(--r);border:1px solid var(--bdr)}
-.nav-t{flex:1;padding:10px 6px;text-align:center;font-size:.74rem;font-weight:600;color:var(--t4);border-radius:10px;cursor:pointer;transition:.2s;letter-spacing:.2px;user-select:none}
-.nav-t.on{background:var(--acc);color:#fff;box-shadow:0 2px 16px rgba(59,130,246,.3)}
-.nav-t.done{color:var(--ok)}.nav-t.done::after{content:' ✓';font-size:.6rem}
-.nav-t:hover:not(.on){background:var(--s2);color:var(--t3)}
+/* Input */
+.input-area{margin-bottom:24px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;}
+.input-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);margin-bottom:10px;}
+.input-flex{display:flex;gap:10px;align-items:center;}
+.url-input{flex:1;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--t1);font-family:'Space Mono',monospace;font-size:13px;outline:none;transition:border-color 0.2s;}
+.url-input:focus{border-color:var(--violet);}
+.url-input::placeholder{color:var(--t3);}
+.btn{border:none;border-radius:10px;padding:12px 24px;font-family:'Outfit',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.btn-run{background:linear-gradient(135deg,var(--violet),#8b5cf6);color:#fff;}
+.btn-run:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(167,139,250,0.3);}
+.btn-run:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-stop{background:rgba(251,113,133,0.12);border:1px solid rgba(251,113,133,0.25);color:var(--rose);display:none;padding:12px 18px;}
+.btn-refresh{background:none;border:1px solid rgba(251,191,36,0.25);color:var(--amber);font-size:11px;padding:10px 14px;display:none;}
+.btn-refresh:hover{background:var(--ag);}
 
-/* PANELS */
-.pnl{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);padding:24px;margin-bottom:16px;transition:.2s}
-.pnl:hover{border-color:var(--bdr2)}
-.ph{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-.pi{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.15);flex-shrink:0}
-.pt{font-size:1rem;font-weight:600}.ps{font-size:.8rem;color:var(--t4)}
+/* Progress */
+.progress{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:24px;display:none;}
+.progress.show{display:block;}
+.pbar-wrap{width:100%;height:5px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;margin-bottom:12px;}
+.pbar-fill{height:100%;background:linear-gradient(90deg,var(--violet),var(--cyan));border-radius:3px;transition:width 0.4s;width:0%;}
+.pbar-row{display:flex;justify-content:space-between;font-size:12px;}
+.pbar-text{color:var(--t2);}
+.pbar-pct{font-family:'Space Mono',monospace;color:var(--vb);font-weight:700;}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px;}
+.chip{font-size:10px;font-weight:600;padding:4px 11px;border-radius:100px;border:1px solid var(--border);color:var(--t3);transition:all 0.3s;}
+.chip.running{border-color:rgba(167,139,250,0.3);color:var(--violet);background:var(--vg);animation:pulse 1.5s ease infinite;}
+.chip.done{border-color:rgba(163,230,53,0.25);color:var(--lime);background:var(--lg);}
+.chip.cached{border-color:rgba(251,191,36,0.25);color:var(--amber);background:var(--ag);}
+.chip.error{border-color:rgba(251,113,133,0.25);color:var(--rose);background:var(--rg);}
 
-/* FORM */
-.fg{margin-bottom:14px}
-.fl{display:block;font-size:.8rem;font-weight:500;color:var(--t3);margin-bottom:5px;letter-spacing:.2px}
-.fl .rq{color:var(--err);margin-left:2px}
-input[type=text],input[type=url],select,textarea{width:100%;padding:10px 13px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--rs);color:var(--t1);font-family:var(--f);font-size:.88rem;transition:.15s;outline:none}
-input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
-select{appearance:none;cursor:pointer;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2394a3b8'%3E%3Cpath d='M5 7L0 2h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-textarea{resize:vertical;min-height:70px}
-.url-g{display:flex;gap:8px}.url-g input{flex:1}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+/* Scorecard */
+.scorecard{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:24px;display:none;grid-template-columns:170px 1fr;gap:28px;align-items:center;}
+.scorecard.show{display:grid;}
+.sc-left{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.sc-donut{position:relative;width:110px;height:110px;}
+.sc-donut svg{width:100%;height:100%;transform:rotate(-90deg);}
+.d-bg{fill:none;stroke:rgba(255,255,255,0.04);stroke-width:8;}
+.d-fill{fill:none;stroke:url(#sg);stroke-width:8;stroke-linecap:round;stroke-dasharray:314;stroke-dashoffset:314;transition:stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1);}
+.sc-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.sc-n{font-size:30px;font-weight:800;background:linear-gradient(135deg,var(--vb),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sc-l{font-size:9px;color:var(--t3);}
+.sc-tag{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:4px 12px;border-radius:100px;}
+.sc-tag.strong{background:var(--lg);border:1px solid rgba(163,230,53,0.2);color:var(--lime);}
+.sc-tag.medium{background:var(--ag);border:1px solid rgba(251,191,36,0.2);color:var(--amber);}
+.sc-tag.low{background:var(--rg);border:1px solid rgba(251,113,133,0.2);color:var(--rose);}
+.sc-sum{font-size:10px;color:var(--t2);text-align:center;line-height:1.5;max-width:150px;}
+.dims{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.dim{background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;position:relative;cursor:default;}
+.dim:hover{border-color:rgba(167,139,250,0.2);}
+.dim-v{font-size:22px;font-weight:700;margin-bottom:3px;}
+.dim-v.hi{color:var(--lime);}.dim-v.mid{color:var(--amber);}.dim-v.lo{color:var(--rose);}
+.dim-n{font-size:9px;color:var(--t3);line-height:1.3;}
+.dim-r{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a1a2e;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:10px;color:var(--t2);width:200px;z-index:10;line-height:1.5;box-shadow:0 6px 24px rgba(0,0,0,0.5);}
+.dim:hover .dim-r{display:block;}
 
-/* BUTTONS */
-.btn{padding:10px 20px;border:none;border-radius:var(--rs);font-family:var(--f);font-size:.86rem;font-weight:600;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:7px}
-.btn:active{transform:scale(.98)}
-.bp{background:var(--g1);color:#fff;box-shadow:0 2px 12px rgba(59,130,246,.2)}.bp:hover{box-shadow:0 4px 24px rgba(59,130,246,.35);transform:translateY(-1px)}.bp:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.bs{background:var(--s2);color:var(--t3);border:1px solid var(--bdr)}.bs:hover{background:var(--s3);color:var(--t2)}
-.bg{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
-.bw{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
-.bv{background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff}
-.br{display:flex;justify-content:space-between;gap:10px;margin-top:20px}
+/* Tabs */
+.tabs{display:none;gap:4px;margin-bottom:3px;overflow-x:auto;}
+.tabs.show{display:flex;}
+.tab{background:var(--card);border:1px solid var(--border);border-radius:12px 12px 3px 3px;padding:12px 16px;cursor:pointer;text-align:center;min-width:90px;flex:1;position:relative;transition:all 0.2s;}
+.tab:hover{background:var(--hover);}
+.tab.active{background:rgba(167,139,250,0.06);border-color:rgba(167,139,250,0.2);}
+.tab.active::after{content:'';position:absolute;bottom:-1px;left:20%;right:20%;height:2px;background:linear-gradient(90deg,var(--violet),var(--cyan));border-radius:2px;}
+.tab-l{font-size:18px;font-weight:800;display:block;margin-bottom:1px;color:var(--t3);}
+.tab.active .tab-l{background:linear-gradient(135deg,var(--vb),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.tab-n{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.7px;color:var(--t3);}
+.tab.active .tab-n{color:var(--t2);}
+.tab.disabled{opacity:0.25;cursor:not-allowed;}
+.tab-meta{font-family:'Space Mono',monospace;font-size:7px;color:var(--t3);margin-top:2px;display:block;}
+.tab-meta.cached{color:var(--amber);}
+.tab-src{font-size:7px;color:var(--cyan);margin-top:1px;display:block;}
 
-/* STATUS / LOADING */
-.rs-box{display:none;padding:14px 18px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--rs);margin-top:14px}
-.rs-box.on{display:block}
-.dot{display:inline-block;width:7px;height:7px;background:var(--ok);border-radius:50%;margin-right:7px;animation:p 1.2s infinite}
-@keyframes p{0%,100%{opacity:1}50%{opacity:.25}}
-.so{margin-top:10px;padding:14px;background:var(--bg);border-radius:var(--rs);font-family:var(--m);font-size:.75rem;line-height:1.7;color:var(--t4);max-height:300px;overflow-y:auto;white-space:pre-wrap;word-break:break-word}
+/* Content */
+.content{background:var(--card);border:1px solid var(--border);border-radius:3px 3px 18px 18px;padding:32px 36px;min-height:180px;display:none;}
+.content.show{display:block;animation:fadeUp 0.3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
-/* RESULT CARDS */
-.rg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.rc{padding:14px;background:var(--s2);border-radius:var(--rs);border:1px solid var(--bdr)}
-.rc-l{font-size:.7rem;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.rc-v{font-size:.9rem;font-weight:500}
+/* Section badge */
+.sec-badge{display:inline-flex;align-items:center;gap:8px;margin-bottom:16px;padding:6px 14px;background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.15);border-radius:8px;}
+.sec-badge-letter{font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--vb),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sec-badge-name{font-size:11px;font-weight:600;color:var(--vb);text-transform:uppercase;letter-spacing:1px;}
 
-/* TAGS */
-.tag{display:inline-block;padding:2px 9px;font-size:.72rem;font-weight:600;border-radius:4px;margin:2px}
-.tb{background:rgba(59,130,246,.12);color:#60a5fa}
-.tg{background:rgba(16,185,129,.12);color:#34d399}
-.to{background:rgba(245,158,11,.12);color:#fbbf24}
-.tc{background:rgba(6,182,212,.12);color:#22d3ee}
-.tp{background:rgba(139,92,246,.12);color:#a78bfa}
+/* Rich content styles */
+.rich h3{font-size:16px;font-weight:700;color:var(--t1);margin:28px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(167,139,250,0.1);}
+.rich h3:first-child{margin-top:0;}
+.rich h4{font-size:12px;font-weight:600;color:var(--vb);margin:20px 0 8px;text-transform:uppercase;letter-spacing:0.5px;}
+.rich p{font-size:13.5px;color:var(--t2);line-height:1.8;margin:8px 0;}
+.rich ul,.rich ol{padding-left:18px;margin:8px 0;}
+.rich li{font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:6px;padding-left:4px;}
+.rich li::marker{color:var(--violet);}
+.rich strong{color:var(--t1);font-weight:600;}
+.rich em{color:var(--vb);font-style:normal;}
+.rich table{width:100%;border-collapse:collapse;margin:14px 0;border-radius:8px;overflow:hidden;}
+.rich th{background:rgba(167,139,250,0.1);color:var(--vb);padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;}
+.rich td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--t2);font-size:12px;}
+.rich tr:hover td{background:rgba(255,255,255,0.015);}
+.rich a{color:var(--cyan);text-decoration:none;}
+.rich a:hover{text-decoration:underline;}
+.rich blockquote{border-left:3px solid var(--violet);padding:12px 18px;margin:14px 0;background:rgba(167,139,250,0.04);border-radius:0 10px 10px 0;font-style:italic;color:var(--t2);}
 
-/* REPORT OUTPUT */
-.report{padding:0}
-.report h3{color:var(--acc);margin:20px 0 8px;font-size:1rem;font-weight:700}
-.report p{color:var(--t3);font-size:.9rem;line-height:1.7;margin-bottom:10px}
-.report strong{color:var(--t1)}
-.report-loading{display:flex;align-items:center;gap:8px;padding:20px;color:var(--t4);font-size:.88rem}
+/* Action box */
+.rich .action-box{background:rgba(103,232,249,0.03);border:1px solid rgba(103,232,249,0.12);border-radius:12px;padding:18px 22px;margin:20px 0;}
+.rich .action-box h4{color:var(--cyan);margin-top:0;border:none;padding:0;}
+.rich .action-box li{color:var(--t1);}
+.rich .action-box li::marker{color:var(--cyan);}
 
-/* STEPS */
-.sc{display:none}.sc.on{display:block;animation:fi .3s ease}
-@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* Citations */
+.rich .cite{font-size:9px;color:var(--cyan);cursor:pointer;opacity:0.6;transition:opacity 0.2s;border-bottom:1px dotted rgba(103,232,249,0.3);padding:1px 3px;border-radius:2px;}
+.rich .cite:hover{opacity:1;background:rgba(103,232,249,0.08);}
 
-/* EXPORT */
-.exp-b{display:flex;justify-content:center;gap:12px;margin-top:18px;flex-wrap:wrap}
+/* Sources panel */
+.src-panel{background:rgba(0,0,0,0.2);border:1px solid rgba(103,232,249,0.08);border-radius:12px;padding:18px 22px;margin-top:24px;}
+.src-panel h4{color:var(--cyan);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.src-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.02);}
+.src-item:last-child{border-bottom:none;}
+.src-num{font-family:'Space Mono',monospace;font-size:9px;color:var(--cyan);min-width:18px;padding-top:1px;}
+.src-info{flex:1;min-width:0;}
+.src-title{font-size:11px;color:var(--t1);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.src-title a{color:var(--cyan);text-decoration:none;}
+.src-title a:hover{text-decoration:underline;}
+.src-domain{font-family:'Space Mono',monospace;font-size:9px;color:var(--t3);}
+.no-src{font-size:11px;color:var(--t3);font-style:italic;}
 
-/* TOAST */
-.toast{position:fixed;bottom:20px;right:20px;padding:11px 18px;background:var(--ok);color:#fff;border-radius:var(--rs);font-weight:600;font-size:.85rem;z-index:999;opacity:0;transform:translateY(8px);transition:.3s;pointer-events:none}
-.toast.show{opacity:1;transform:translateY(0)}
+/* Error */
+.error-bar{background:var(--rg);border:1px solid rgba(251,113,133,0.2);border-radius:10px;padding:12px 18px;margin-bottom:18px;font-size:12px;color:var(--rose);display:none;}
+.error-bar.show{display:block;}
 
-/* FOOTER */
-.ftr{text-align:center;padding:40px 0 20px;color:var(--t4);font-size:.78rem}
+/* Export footer */
+.export-footer{display:none;justify-content:flex-end;gap:8px;padding:20px 0 40px;}
+.export-footer.show{display:flex;}
+.btn-exp{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-family:'Space Mono',monospace;font-size:10px;color:var(--t3);cursor:pointer;transition:all 0.2s;}
+.btn-exp:hover{border-color:var(--violet);color:var(--violet);}
+.btn-exp.primary{background:rgba(167,139,250,0.08);border-color:rgba(167,139,250,0.2);color:var(--vb);font-size:11px;}
+.btn-exp.primary:hover{background:rgba(167,139,250,0.15);}
 
-/* RESPONSIVE */
-@media(max-width:640px){.frow,.frow3{grid-template-columns:1fr}.rg{grid-template-columns:1fr}.url-g{flex-direction:column}.br{flex-direction:column}.nav{flex-wrap:wrap}.nav-t{font-size:.66rem;padding:8px 4px}.hdr h1{font-size:1.5rem}.exp-b{flex-direction:column;align-items:center}}
+@media(max-width:900px){.scorecard.show{grid-template-columns:1fr;}.dims{grid-template-columns:repeat(3,1fr);}.tabs.show{flex-wrap:wrap;}.tab{flex:1 1 calc(33% - 3px);min-width:auto;}}
+@media(max-width:600px){.app{padding:0 14px;}.content{padding:22px 18px;}.dims{grid-template-columns:repeat(2,1fr);}.header{flex-direction:column;align-items:flex-start;}.input-flex{flex-direction:column;}}
 </style>
 </head>
 <body>
-<div class="wrap">
-
-  <header class="hdr">
-    <h1>ICP Discovery Engine</h1>
-    <p>Discover your Ideal Customer Profile. Paste your company URL — get AI-powered market research, ICP strategy, GTM recommendations, and competitive positioning.</p>
-    <div class="badge">Powered by AI Research</div>
-  </header>
-
-  <nav class="nav" id="nav">
-    <div class="nav-t on" data-s="1" onclick="go(1)">1 · Your Company</div>
-    <div class="nav-t" data-s="2" onclick="go(2)">2 · Market Research</div>
-    <div class="nav-t" data-s="3" onclick="go(3)">3 · Refine Focus</div>
-    <div class="nav-t" data-s="4" onclick="go(4)">4 · ICP Strategy</div>
-    <div class="nav-t" data-s="5" onclick="go(5)">5 · Export</div>
-  </nav>
-
-  <!-- ═══ STEP 1: YOUR COMPANY ═══ -->
-  <section class="sc on" id="s1">
-    <div class="pnl">
-      <div class="ph"><div class="pi">🏢</div><div><div class="pt">Tell Us About Your Company</div><div class="ps">We'll research your market and build your ideal customer profile</div></div></div>
-      <div class="fg">
-        <label class="fl">Your Company Website <span class="rq">*</span></label>
-        <div class="url-g">
-          <input type="url" id="url" placeholder="https://yourcompany.com">
-          <button class="btn bp" id="rbtn" onclick="doResearch()">⚡ Discover My ICP</button>
-        </div>
-      </div>
-      <div class="frow">
-        <div class="fg"><label class="fl">Your Primary Market / Geography</label>
-          <select id="geo"><option value="">All Regions</option><option value="North America">North America</option><option value="EMEA">EMEA</option><option value="APAC">APAC</option><option value="LATAM">LATAM</option><option value="Israel">Israel</option></select>
-        </div>
-        <div class="fg"><label class="fl">Your Industry / Sector</label>
-          <select id="sector"><option value="">Auto-detect</option><option value="Cybersecurity">Cybersecurity</option><option value="FinTech">FinTech / Financial Services</option><option value="HealthTech">HealthTech / Healthcare</option><option value="Retail / E-Commerce">Retail / E-Commerce</option><option value="Manufacturing">Manufacturing / Industrial</option><option value="SaaS">SaaS / Cloud Software</option><option value="DevTools">DevTools / Developer Platforms</option><option value="AI / ML">AI / Machine Learning</option><option value="GovTech">GovTech / Defense</option><option value="EdTech">EdTech</option><option value="MarTech">MarTech / AdTech</option><option value="Logistics">Logistics / Supply Chain</option><option value="PropTech">PropTech / Real Estate</option><option value="Telecom">Telecom</option><option value="Energy">Energy / CleanTech</option><option value="HR Tech">HR Tech</option><option value="Legal Tech">Legal Tech</option><option value="Insurance">InsurTech</option><option value="Other">Other</option></select>
-        </div>
-      </div>
-      <div class="rs-box" id="rsBox">
-        <div><span class="dot" id="rdot"></span><span id="rsTxt">Analyzing your company...</span></div>
-        <div class="so" id="so"></div>
-      </div>
+<div class="orb orb-1"></div><div class="orb orb-2"></div>
+<div class="app">
+  <div class="header">
+    <div class="logo-row"><div class="logo-icon">A</div><div class="logo-stack"><h1>MEDDIC Intelligence</h1><p>Askit.ai Prospect Qualification Engine</p></div></div>
+    <div class="badge-row">
+      <div class="badge" id="srcBadge" style="display:none"><span id="srcNum">0</span> sources</div>
+      <div class="badge"><div class="dot g" id="dot"></div><span id="dotText">Ready</span></div>
     </div>
-  </section>
+  </div>
 
-  <!-- ═══ STEP 2: MARKET RESEARCH ═══ -->
-  <section class="sc" id="s2">
-    <div class="pnl" id="resPnl" style="border-color:rgba(59,130,246,.25);background:linear-gradient(135deg,rgba(59,130,246,.03),rgba(6,182,212,.02))">
-      <div class="ph"><div class="pi">📊</div><div><div class="pt" id="cName">Your Market Analysis</div><div class="ps">AI-generated intelligence about your market, competitors, and ecosystem</div></div></div>
-      <div class="rg" id="resGrid"></div>
-      <div id="resNarr" style="margin-top:14px"></div>
+  <div class="input-area">
+    <div class="input-label">Prospect Company URL</div>
+    <div class="input-flex">
+      <input class="url-input" id="urlInput" placeholder="e.g. drunkelephant.com" />
+      <button class="btn btn-run" id="btnRun" onclick="run()">Run MEDDIC</button>
+      <button class="btn btn-stop" id="btnStop" onclick="stop()">Stop</button>
+      <button class="btn btn-refresh" id="btnRefresh" onclick="refresh()">Refresh</button>
     </div>
-    <div class="br">
-      <button class="btn bs" onclick="go(1)">← Change Company</button>
-      <button class="btn bp" onclick="go(3)">Refine My ICP Focus →</button>
-    </div>
-  </section>
+  </div>
 
-  <!-- ═══ STEP 3: REFINE FOCUS ═══ -->
-  <section class="sc" id="s3">
-    <div class="pnl">
-      <div class="ph"><div class="pi">🎛️</div><div><div class="pt">Refine Your ICP Focus</div><div class="ps">Adjust these filters to narrow your ideal customer profile — then regenerate</div></div></div>
+  <div class="error-bar" id="err"></div>
 
-      <div class="frow3">
-        <div class="fg"><label class="fl">Target Customer Size</label>
-          <select id="f_size"><option value="">Any size</option><option value="SMB (1-200 employees)">SMB (1–200)</option><option value="Mid-Market (201-2,000)">Mid-Market (201–2,000)</option><option value="Enterprise (2,001-10,000)">Enterprise (2,001–10,000)</option><option value="Large Enterprise (10,000+)">Large Enterprise (10,000+)</option></select>
-        </div>
-        <div class="fg"><label class="fl">Target Geography</label>
-          <select id="f_geo"><option value="">Global</option><option value="North America">North America</option><option value="US only">US only</option><option value="Europe">Europe</option><option value="UK">UK</option><option value="DACH (Germany, Austria, Switzerland)">DACH</option><option value="Nordics">Nordics</option><option value="APAC">APAC</option><option value="Japan">Japan</option><option value="ANZ (Australia, New Zealand)">ANZ</option><option value="LATAM">LATAM</option><option value="Middle East">Middle East</option><option value="Israel">Israel</option><option value="Africa">Africa</option></select>
-        </div>
-        <div class="fg"><label class="fl">Target Sector / Vertical</label>
-          <select id="f_vertical"><option value="">All verticals</option><option value="Financial Services & Banking">Financial Services & Banking</option><option value="Healthcare & Life Sciences">Healthcare & Life Sciences</option><option value="Retail & E-Commerce">Retail & E-Commerce</option><option value="Manufacturing & Industrial">Manufacturing & Industrial</option><option value="Technology & SaaS">Technology & SaaS</option><option value="Government & Public Sector">Government & Public Sector</option><option value="Education">Education</option><option value="Media & Entertainment">Media & Entertainment</option><option value="Telecommunications">Telecommunications</option><option value="Energy & Utilities">Energy & Utilities</option><option value="Transportation & Logistics">Transportation & Logistics</option><option value="Real Estate & Construction">Real Estate & Construction</option><option value="Professional Services">Professional Services</option><option value="Non-Profit">Non-Profit</option></select>
-        </div>
-      </div>
+  <div class="progress" id="prog">
+    <div class="pbar-wrap"><div class="pbar-fill" id="pbar"></div></div>
+    <div class="pbar-row"><div class="pbar-text" id="ptext">Starting...</div><div class="pbar-pct" id="ppct">0%</div></div>
+    <div class="chips" id="chips"></div>
+  </div>
 
-      <div class="frow">
-        <div class="fg"><label class="fl">Target Buyer / Decision Maker</label>
-          <select id="f_buyer"><option value="">Auto-detect</option><option value="CISO / Security Leaders">CISO / Security Leaders</option><option value="CTO / VP Engineering">CTO / VP Engineering</option><option value="CIO / IT Leaders">CIO / IT Leaders</option><option value="CFO / Finance Leaders">CFO / Finance Leaders</option><option value="CEO / Founders">CEO / Founders</option><option value="COO / Operations">COO / Operations</option><option value="CMO / Marketing Leaders">CMO / Marketing Leaders</option><option value="VP Sales / Revenue Leaders">VP Sales / Revenue Leaders</option><option value="DevOps / Platform Engineers">DevOps / Platform Engineers</option><option value="Procurement / Vendor Management">Procurement / Vendor Management</option><option value="Legal / Compliance">Legal / Compliance</option><option value="HR / People Leaders">HR / People Leaders</option></select>
-        </div>
-        <div class="fg"><label class="fl">Primary Sales Motion</label>
-          <select id="f_motion"><option value="">Auto-detect</option><option value="Product-Led Growth (PLG)">Product-Led Growth (PLG)</option><option value="Sales-Led Enterprise">Sales-Led Enterprise</option><option value="Channel / Partner-Led">Channel / Partner-Led</option><option value="Community-Led">Community-Led</option><option value="Outbound-Heavy">Outbound-Heavy</option><option value="Inbound / Content-Led">Inbound / Content-Led</option></select>
-        </div>
-      </div>
+  <div class="scorecard" id="scorecard">
+    <div class="sc-left">
+      <div class="sc-donut"><svg viewBox="0 0 110 110"><defs><linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#67e8f9"/></linearGradient></defs><circle class="d-bg" cx="55" cy="55" r="50"/><circle class="d-fill" cx="55" cy="55" r="50" id="donut"/></svg><div class="sc-num"><div class="sc-n" id="scN">-</div><div class="sc-l">of 30</div></div></div>
+      <div class="sc-tag" id="scTag">-</div>
+      <div class="sc-sum" id="scSum"></div>
+    </div>
+    <div class="dims" id="dims"></div>
+  </div>
 
-      <div class="fg"><label class="fl">Additional Context (optional)</label>
-        <textarea id="f_context" placeholder="Example: 'We're launching in the US market next quarter and want to focus on mid-market financial services companies with compliance requirements...'"></textarea>
-      </div>
-    </div>
-    <div class="br">
-      <button class="btn bs" onclick="go(2)">← Back to Research</button>
-      <button class="btn bp" onclick="genStrategy()">🎯 Generate My ICP Strategy →</button>
-    </div>
-  </section>
+  <div class="tabs" id="tabs"></div>
+  <div class="content" id="content"><div class="rich" id="rich"></div></div>
 
-  <!-- ═══ STEP 4: ICP STRATEGY REPORT ═══ -->
-  <section class="sc" id="s4">
-    <div class="pnl" style="border-color:rgba(59,130,246,.25);background:linear-gradient(135deg,rgba(59,130,246,.03),rgba(6,182,212,.02))">
-      <div class="ph"><div class="pi">🎯</div><div><div class="pt">Your ICP Strategy Report</div><div class="ps" id="repSub">Comprehensive ICP + GTM + Competitive Strategy</div></div></div>
-      <div id="reportContent" class="report">
-        <div class="report-loading"><span class="dot"></span> Generating your strategy report...</div>
-      </div>
-    </div>
-    <div class="br">
-      <button class="btn bs" onclick="go(3)">← Adjust Filters & Regenerate</button>
-      <button class="btn bp" onclick="go(5)">Export Report →</button>
-    </div>
-  </section>
-
-  <!-- ═══ STEP 5: EXPORT ═══ -->
-  <section class="sc" id="s5">
-    <div class="pnl" style="text-align:center;padding:32px">
-      <div class="pi" style="margin:0 auto 14px;width:52px;height:52px;font-size:1.6rem">📤</div>
-      <div class="pt" style="font-size:1.2rem;margin-bottom:6px">Export Your ICP Strategy Report</div>
-      <p style="color:var(--t3);max-width:460px;margin:0 auto;font-size:.88rem">Download as PDF, copy to clipboard, or go back and refine with different filters.</p>
-      <div class="exp-b">
-        <button class="btn bp" onclick="dlPDF()">📄 Download PDF</button>
-        <button class="btn bg" onclick="cpClip()">📋 Copy to Clipboard</button>
-        <button class="btn bw" onclick="dlJSON()">🤖 Export JSON (for AI Agent)</button>
-        <button class="btn bv" onclick="go(3)">🎛️ Refine & Regenerate</button>
-      </div>
-    </div>
-    <div class="br">
-      <button class="btn bs" onclick="go(4)">← Back to Report</button>
-      <button class="btn bw" onclick="resetAll()">🔄 New Company</button>
-    </div>
-  </section>
-
-  <footer class="ftr">ICP Discovery Engine · Discover who your ideal customers are</footer>
+  <div class="export-footer" id="exportFooter">
+    <button class="btn-exp primary" onclick="exportPDF()">Export PDF Report</button>
+    <button class="btn-exp" onclick="exportDoc()">Export .doc</button>
+  </div>
 </div>
 
-<div class="toast" id="toast"></div>
-
 <script>
-let RD=null,REPORT=null,REPORT_RAW='',cs=1;
-const researchedURLs=new Map(); // URL → research data cache
+const STEPS=[{id:'research',label:'Research'},{id:'icp',label:'ICP Score'},{id:'metrics',label:'Metrics',L:'M'},{id:'economic',label:'Econ. Buyer',L:'E'},{id:'criteria',label:'Criteria',L:'D'},{id:'process',label:'Process',L:'D'},{id:'pain',label:'Pain',L:'I'},{id:'champion',label:'Champion',L:'C'}];
+const TABS=STEPS.filter(s=>s.L);
+let res={},src={},icp=null,curTab='metrics',aborted=false,meta={};
+const $=id=>document.getElementById(id);
 
-function go(n){cs=n;document.querySelectorAll('.sc').forEach(e=>e.classList.remove('on'));document.getElementById('s'+n).classList.add('on');document.querySelectorAll('.nav-t').forEach(e=>{e.classList.remove('on');if(+e.dataset.s===n)e.classList.add('on')});window.scrollTo({top:0,behavior:'smooth'})}
-function done(n){document.querySelector(`.nav-t[data-s="${n}"]`).classList.add('done')}
+async function api(s,u,c){const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:s,url:u,context:c})});if(!r.ok){const e=await r.json().catch(()=>({error:'HTTP '+r.status}));throw new Error(e.error);}return r.json();}
+async function clearCache(u){await fetch('/api/clear-cache',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u})});}
+function allSrc(){let a=[],seen=new Set();for(const k of Object.keys(src))for(const s of src[k])if(!seen.has(s.url)){seen.add(s.url);a.push(s);}return a;}
+function updSrcBadge(){const a=allSrc();if(a.length){$('srcNum').textContent=a.length;$('srcBadge').style.display='flex';}}
 
-async function callAPI(endpoint,body){const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||'API error '+r.status)}return r.json()}
+function renderChips(){$('chips').innerHTML=STEPS.map(s=>'<span class="chip" id="c-'+s.id+'">'+s.label+'</span>').join('');}
+function setChip(id,st){const e=document.getElementById('c-'+id);if(e)e.className='chip '+st;}
+function setProg(p,t){$('pbar').style.width=p+'%';$('ppct').textContent=p+'%';if(t)$('ptext').textContent=t;}
 
-// ═══ STEP 1: RESEARCH ═══
-async function doResearch(){
-  const url=document.getElementById('url').value.trim();
-  if(!url){toast('Please enter your company URL');return}
-
-  // Normalize URL for comparison
-  const normURL=url.replace(/\/+$/,'').replace(/^https?:\/\//,'').replace(/^www\./,'').toLowerCase();
-
-  // Check if already researched
-  if(researchedURLs.has(normURL)){
-    RD=researchedURLs.get(normURL);
-    showRes(RD);
-    done(1);done(2);
-    toast('Using cached research for this URL');
-    go(2);
-    return;
-  }
-
-  const geo=document.getElementById('geo').value;
-  const sector=document.getElementById('sector').value;
-  const btn=document.getElementById('rbtn');
-  const box=document.getElementById('rsBox');
-  const txt=document.getElementById('rsTxt');
-  const so=document.getElementById('so');
-
-  btn.disabled=true;btn.textContent='⏳ Researching...';
-  box.classList.add('on');txt.textContent='Analyzing '+url+'...';so.textContent='';
-
-  const sys=`You are a senior B2B market research analyst. Given a company URL, produce a structured analysis of THEIR market to help them understand who their ideal customers should be. Be specific and data-driven.
-
-RESPOND ONLY IN VALID JSON (no markdown, no backticks):
-{
-"company_name":"string",
-"one_liner":"What they do in one sentence",
-"sector":"Primary sector",
-"sub_sector":"Sub-sector",
-"founded":"Year",
-"hq_location":"City, Country",
-"estimated_employees":"range",
-"estimated_revenue":"range",
-"funding_stage":"string",
-"total_funding":"string",
-"value_proposition":"Their core value proposition in 1-2 sentences",
-"target_market":"Who they currently sell to",
-"market_size_tam":"TAM estimate",
-"market_growth_rate":"CAGR",
-"key_trends":["trend1","trend2","trend3","trend4","trend5"],
-"competitors":[{"name":"string","positioning":"How they position vs this company","key_advantage":"string"}],
-"suggested_icp":{
-  "company_size":"ideal target company size (employees)",
-  "revenue_range":"ideal target revenue range",
-  "industries":["top 3-5 target verticals"],
-  "job_titles_buyers":["primary buyer titles"],
-  "pain_points":["what problems their ICP has that this company solves"],
-  "buying_triggers":["what events cause ICP to buy"],
-  "tech_signals":["tech stack signals indicating fit"]
-},
-"geo_insights":"Geographic market opportunity analysis",
-"strategic_summary":"2-3 sentence strategic assessment of their ICP opportunity"
-}`;
-
-  try{
-    const data=await callAPI('/api/research',{
-      system:sys,
-      messages:[{role:'user',content:`Research this company: ${url}${geo?'\nTheir primary market: '+geo:''}${sector?'\nTheir sector: '+sector:''}\n\nAnalyze their market position and who their ideal customers should be. Focus on building an ICP for them.`}],
-      tools:[{type:'web_search_20250305',name:'web_search'}]
-    });
-    txt.textContent='Processing results...';
-    let ft='';if(data.content)for(const b of data.content)if(b.type==='text')ft+=b.text;
-    so.textContent=ft.substring(0,1500);
-    let parsed;
-    try{parsed=JSON.parse(ft.replace(/```json|```/g,'').trim())}
-    catch(e){const m=ft.match(/\{[\s\S]*\}/);if(m)parsed=JSON.parse(m[0]);else throw new Error('Parse error')}
-    RD=parsed;
-    researchedURLs.set(normURL,parsed); // Cache the result
-    showRes(parsed);
-    done(1);done(2);
-    txt.textContent='✅ Research complete!';
-    document.getElementById('rdot').style.animation='none';
-    document.getElementById('rdot').style.background='var(--ok)';
-    go(2);
-  }catch(err){
-    txt.textContent='⚠️ Issue with research — try a different URL or proceed manually.';
-    so.textContent='Error: '+err.message;
-    RD={company_name:url,error:true};
-  }
-  btn.disabled=false;btn.textContent='⚡ Discover My ICP';
+function renderSrcPanel(ss){
+  if(!ss||!ss.length)return '<div class="src-panel"><h4>Sources</h4><p class="no-src">No web sources for this section.</p></div>';
+  let h='<div class="src-panel"><h4>Sources ('+ss.length+')</h4>';
+  ss.forEach((s,i)=>{let d;try{d=new URL(s.url).hostname.replace('www.','');}catch(e){d=s.url;}
+    h+='<div class="src-item"><div class="src-num">['+(i+1)+']</div><div class="src-info"><div class="src-title"><a href="'+s.url+'" target="_blank">'+(s.title||d)+'</a></div><div class="src-domain">'+d+'</div></div></div>';
+  });
+  return h+'</div>';
 }
 
-function showRes(d){
-  document.getElementById('cName').textContent=(d.company_name||'Your Company')+' — Market Analysis';
-  const cards=[['Sector',d.sector+(d.sub_sector?' / '+d.sub_sector:''),'🏷️'],['Founded',d.founded||'N/A','📅'],['HQ',d.hq_location||'N/A','📍'],['Employees',d.estimated_employees||'N/A','👥'],['Revenue',d.estimated_revenue||'N/A','💰'],['Funding',(d.funding_stage||'')+(d.total_funding?' ('+d.total_funding+')':''),'🏦'],['TAM',d.market_size_tam||'N/A','📈'],['Growth',d.market_growth_rate||'N/A','🚀']];
-  document.getElementById('resGrid').innerHTML=cards.map(([l,v,i])=>`<div class="rc"><div class="rc-l">${i} ${l}</div><div class="rc-v">${v}</div></div>`).join('');
-
-  let h='';
-  if(d.value_proposition)h+=`<div style="margin-top:14px;padding:12px;background:var(--s2);border-radius:8px;border-left:3px solid var(--acc2);font-size:.9rem;color:var(--t2)"><strong style="color:var(--acc2)">Your Value Proposition:</strong> ${d.value_proposition}</div>`;
-  if(d.key_trends?.length)h+=`<div style="margin-top:14px"><strong style="color:var(--acc)">Market Trends:</strong><div style="margin-top:6px">${d.key_trends.map(t=>`<span class="tag tb">${t}</span>`).join('')}</div></div>`;
-  if(d.competitors?.length)h+=`<div style="margin-top:14px"><strong style="color:var(--acc)">Your Competitors:</strong>${d.competitors.map(c=>`<div style="padding:8px 12px;background:var(--s2);border-radius:6px;margin-top:6px;border-left:3px solid var(--acc2)"><strong>${c.name}</strong> <span style="color:var(--t4);font-size:.8rem">— ${c.positioning}</span><div style="font-size:.8rem;color:var(--t3);margin-top:2px">Their advantage: ${c.key_advantage}</div></div>`).join('')}</div>`;
-  if(d.suggested_icp){const i=d.suggested_icp;h+=`<div style="margin-top:18px;padding:14px;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.12);border-radius:8px"><strong style="color:var(--acc)">📎 AI-Suggested ICP (your ideal customer):</strong><div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.85rem"><div><span style="color:var(--t4)">Target Size:</span> ${i.company_size||'N/A'}</div><div><span style="color:var(--t4)">Revenue:</span> ${i.revenue_range||'N/A'}</div><div><span style="color:var(--t4)">Industries:</span> ${(i.industries||[]).join(', ')}</div><div><span style="color:var(--t4)">Buyers:</span> ${(i.job_titles_buyers||[]).join(', ')}</div></div>${i.pain_points?'<div style="margin-top:6px"><span style="color:var(--t4);font-size:.8rem">Their pain points:</span> '+i.pain_points.map(p=>`<span class="tag to">${p}</span>`).join('')+'</div>':''}${i.buying_triggers?'<div style="margin-top:4px"><span style="color:var(--t4);font-size:.8rem">Buying triggers:</span> '+i.buying_triggers.map(t=>`<span class="tag tg">${t}</span>`).join('')+'</div>':''}</div>`}
-  if(d.strategic_summary)h+=`<div style="margin-top:14px;padding:12px;background:var(--s2);border-radius:8px;border-left:3px solid var(--ok);font-size:.88rem;color:var(--t3)"><strong style="color:var(--ok)">Strategic Summary:</strong> ${d.strategic_summary}</div>`;
-  document.getElementById('resNarr').innerHTML=h;
+function renderScore(d){
+  $('donut').style.strokeDashoffset=314*(1-d.total/30);$('scN').textContent=d.total;$('scSum').textContent=d.summary||'';
+  const t=$('scTag');t.textContent=d.verdict;t.className='sc-tag '+(d.total>=25?'strong':d.total>=15?'medium':'low');
+  $('dims').innerHTML=d.dimensions.map(x=>{
+    const c=x.score>=3?'hi':x.score>=2?'mid':'lo';
+    return '<div class="dim"><div class="dim-v '+c+'">'+x.score+'</div><div class="dim-n">'+x.name+'</div><div class="dim-r">'+x.reason+'</div></div>';
+  }).join('');
+  $('scorecard').classList.add('show');
 }
 
-// ═══ STEP 4: GENERATE STRATEGY ═══
-async function genStrategy(){
-  go(4);
-  document.getElementById('reportContent').innerHTML='<div class="report-loading"><span class="dot"></span> Generating your comprehensive ICP strategy report...</div>';
-  document.getElementById('repSub').textContent=(RD?.company_name||'Your Company')+' — ICP Strategy';
-
-  const filters={
-    size:document.getElementById('f_size').value,
-    geo:document.getElementById('f_geo').value,
-    vertical:document.getElementById('f_vertical').value,
-    buyer:document.getElementById('f_buyer').value,
-    motion:document.getElementById('f_motion').value,
-    context:document.getElementById('f_context').value,
-  };
-
-  const filterText=Object.entries(filters).filter(([k,v])=>v).map(([k,v])=>`${k}: ${v}`).join('\n');
-
-  const prompt=`You are a world-class B2B go-to-market strategist. Based on the company research and the user's focus filters, produce a comprehensive ICP strategy report.
-
-COMPANY RESEARCH:
-${JSON.stringify(RD||{}).substring(0,3000)}
-
-USER'S FOCUS FILTERS:
-${filterText||'No specific filters — provide general recommendations'}
-
-Write a comprehensive report with these exact sections. Use ## for headers. Be specific, actionable, and data-driven. Write for the company's leadership team.
-
-## Ideal Customer Profile
-Define the precise ICP: target company characteristics (size, revenue, industry, geography, tech stack signals), the specific problems these companies face that this product solves, and what makes them ready to buy now.
-
-## Target Buyer Personas
-For each key buyer persona (2-3 personas), describe: their title/role, what they care about, their daily frustrations, how they measure success, and what language/messaging resonates with them.
-
-## Go-To-Market Strategy
-Recommended sales motion, channels, pricing positioning, market entry sequence (which segment to attack first and why), partnership opportunities, and content/demand gen recommendations.
-
-## Competitive Battlecard
-For each major competitor: how to position against them, their weakness to exploit, talk tracks for when prospects mention them, and win/loss patterns.
-
-## Key Messaging Framework
-The core narrative: what problem you solve, for whom, why now, and why you (not competitors). Include 2-3 specific messaging angles for different buyer personas.
-
-## Quick-Win Opportunities
-The 3-5 most actionable things the company can do in the next 30-60 days to start reaching their ICP effectively.`;
-
-  try{
-    const data=await callAPI('/api/generate-icp',{messages:[{role:'user',content:prompt}]});
-    let t=data.content?.map(b=>b.type==='text'?b.text:'').join('')||'';
-    REPORT_RAW=t;
-    // Render markdown-ish
-    t=t.replace(/## (.*)/g,'<h3>$1</h3>');
-    t=t.replace(/### (.*)/g,'<h4 style="color:var(--acc2);font-size:.92rem;margin:14px 0 6px;font-weight:600">$1</h4>');
-    t=t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-    t=t.replace(/\n- (.*)/g,'<br>• $1');
-    t=t.replace(/\n\n/g,'</p><p>');
-    t='<p>'+t+'</p>';
-    REPORT=t;
-    document.getElementById('reportContent').innerHTML=t;
-    done(3);done(4);
-    // Auto-send JSON to email
-    sendJSONEmail();
-  }catch(e){
-    document.getElementById('reportContent').innerHTML=`<div style="color:var(--wrn);padding:16px">⚠️ Report generation encountered an issue: ${e.message}. Try again or adjust your filters.</div>`;
-  }
+function renderTabs(){
+  $('tabs').innerHTML=TABS.map(s=>{
+    const has=!!res[s.id],m=meta[s.id];
+    let mh='';if(m)mh=m.cached?'<span class="tab-meta cached">cached</span>':m.time?'<span class="tab-meta">'+m.time+'s</span>':'';
+    const sc=src[s.id]?src[s.id].length:0;
+    return '<div class="tab'+(s.id===curTab?' active':'')+(has?'':' disabled')+'" onclick="switchTab(\''+s.id+'\')"><span class="tab-l">'+s.L+'</span><span class="tab-n">'+s.label+'</span>'+mh+(sc?'<span class="tab-src">'+sc+' src</span>':'')+'</div>';
+  }).join('');
+  $('tabs').classList.add('show');
 }
 
-// ═══ AUTO-EMAIL JSON ═══
-async function sendJSONEmail(){
-  try{
-    const json=buildExportJSON();
-    const companyName=json.company.name||'Unknown';
-    const date=new Date().toISOString().split('T')[0];
-    await callAPI('/api/send-report',{
-      to:'michael.saggi1@gmail.com',
-      subject:`ICP Report: ${companyName} — ${date}`,
-      company_name:companyName,
-      json_data:json
-    });
-    toast('📧 JSON report emailed automatically');
-  }catch(e){
-    console.error('Email send failed:',e);
-    // Silent fail — don't block the user experience
-  }
+function switchTab(id){
+  if(!res[id])return;curTab=id;renderTabs();
+  const s=STEPS.find(x=>x.id===id);
+  $('rich').innerHTML='<div class="sec-badge"><span class="sec-badge-letter">'+s.L+'</span><span class="sec-badge-name">'+s.label+'</span></div>'+res[id]+renderSrcPanel(src[id]||[]);
+  $('content').classList.add('show');$('content').style.animation='none';void $('content').offsetHeight;$('content').style.animation='';
+  document.querySelectorAll('.cite[data-source]').forEach(el=>{el.style.cursor='pointer';el.onclick=()=>window.open(el.dataset.source,'_blank');});
 }
 
-// ═══ EXPORT ═══
-function buildExportJSON(){
-  const r=RD||{};
-  const filters={
-    target_customer_size:document.getElementById('f_size').value||null,
-    target_geography:document.getElementById('f_geo').value||null,
-    target_vertical:document.getElementById('f_vertical').value||null,
-    target_buyer:document.getElementById('f_buyer').value||null,
-    sales_motion:document.getElementById('f_motion').value||null,
-    additional_context:document.getElementById('f_context').value||null,
-  };
-  // Parse strategy report into sections
-  const sections={};
-  if(REPORT_RAW){
-    const parts=REPORT_RAW.split(/^## /m).filter(Boolean);
-    parts.forEach(part=>{
-      const nl=part.indexOf('\n');
-      if(nl>-1){
-        const key=part.substring(0,nl).trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-        sections[key]=part.substring(nl+1).trim();
+async function run(fr){
+  const url=$('urlInput').value.trim();if(!url)return;
+  if(fr)await clearCache(url);
+  aborted=false;res={};src={};icp=null;meta={};
+  $('btnRun').disabled=true;$('btnStop').style.display='';$('btnRefresh').style.display='none';
+  $('err').classList.remove('show');$('prog').classList.add('show');
+  $('scorecard').classList.remove('show');$('tabs').classList.remove('show');
+  $('content').classList.remove('show');$('exportFooter').classList.remove('show');
+  $('srcBadge').style.display='none';$('dot').className='dot g';$('dotText').textContent='Researching...';
+  renderChips();
+
+  let rc='',cached=false;
+  for(let i=0;i<STEPS.length;i++){
+    if(aborted)break;
+    const sid=STEPS[i].id;
+    setProg(Math.round(i/STEPS.length*100),STEPS[i].label+'...');
+    setChip(sid,'running');
+    const t0=Date.now();
+    try{
+      const d=await api(sid,url,rc);
+      const el=Math.round((Date.now()-t0)/1000);
+      if(d.cached)cached=true;
+      if(d.sources&&d.sources.length)src[sid]=d.sources;
+      if(sid==='research'){
+        rc=d.content;
+        if(d.content.includes('Company Not Found')){
+          $('err').textContent='Company not found at '+url+'. Please check the URL.';
+          $('err').classList.add('show');setChip(sid,'error');
+          break;
+        }
       }
-    });
+      else if(sid==='icp'){
+        try{const cl=d.content.replace(/```json|```/g,'').trim();const m=cl.match(/\{[\s\S]*\}/);icp=JSON.parse(m?m[0]:cl);renderScore(icp);}catch(e){console.error('ICP:',e);}
+      }else{
+        res[sid]=d.content;meta[sid]={cached:d.cached,time:d.cached?null:el};
+        if(!curTab||!res[curTab])curTab=sid;
+        renderTabs();if(sid===curTab)switchTab(sid);
+      }
+      updSrcBadge();setChip(sid,d.cached?'cached':'done');
+    }catch(err){
+      setChip(sid,'error');
+      if(sid!=='research'&&sid!=='icp'){res[sid]='<div style="padding:16px;background:var(--rg);border:1px solid rgba(251,113,133,0.2);border-radius:10px;color:var(--rose);font-size:13px;">'+err.message+'</div>';renderTabs();}
+      if(sid==='research'){$('err').textContent='Research failed: '+err.message;$('err').classList.add('show');break;}
+    }
+    if(i<STEPS.length-1&&!aborted)await new Promise(r=>setTimeout(r,300));
   }
-  return {
-    _meta:{
-      schema_version:"1.0",
-      tool:"icp_discovery_engine",
-      generated_at:new Date().toISOString(),
-      purpose:"Structured ICP data for downstream LLM agent tasks",
-    },
-    company:{
-      name:r.company_name||null,
-      url:document.getElementById('url').value.trim()||null,
-      one_liner:r.one_liner||null,
-      sector:r.sector||null,
-      sub_sector:r.sub_sector||null,
-      founded:r.founded||null,
-      hq_location:r.hq_location||null,
-      estimated_employees:r.estimated_employees||null,
-      estimated_revenue:r.estimated_revenue||null,
-      funding_stage:r.funding_stage||null,
-      total_funding:r.total_funding||null,
-      value_proposition:r.value_proposition||null,
-      target_market:r.target_market||null,
-    },
-    market:{
-      tam:r.market_size_tam||null,
-      growth_rate:r.market_growth_rate||null,
-      key_trends:r.key_trends||[],
-      geo_insights:r.geo_insights||null,
-      strategic_summary:r.strategic_summary||null,
-    },
-    competitors:(r.competitors||[]).map(c=>({
-      name:c.name,
-      positioning:c.positioning,
-      key_advantage:c.key_advantage,
-    })),
-    suggested_icp:{
-      company_size:r.suggested_icp?.company_size||null,
-      revenue_range:r.suggested_icp?.revenue_range||null,
-      target_industries:r.suggested_icp?.industries||[],
-      buyer_titles:r.suggested_icp?.job_titles_buyers||[],
-      pain_points:r.suggested_icp?.pain_points||[],
-      buying_triggers:r.suggested_icp?.buying_triggers||[],
-      tech_signals:r.suggested_icp?.tech_signals||[],
-    },
-    filters_applied:filters,
-    strategy_report:{
-      raw_text:REPORT_RAW||null,
-      sections:sections,
-    },
-    agent_tasks:[
-      {task:"outbound_sequence",description:"Generate a 5-touch outbound email/LinkedIn sequence targeting the buyer personas identified in the ICP",inputs:["company","suggested_icp","strategy_report.sections.target_buyer_personas"]},
-      {task:"battlecard_generation",description:"Create detailed competitive battlecards for each competitor",inputs:["competitors","strategy_report.sections.competitive_battlecard"]},
-      {task:"content_brief",description:"Write content marketing briefs targeting the ICP pain points",inputs:["suggested_icp.pain_points","market.key_trends","strategy_report.sections.key_messaging_framework"]},
-      {task:"account_list_building",description:"Build a target account list matching the ICP criteria",inputs:["suggested_icp","filters_applied"]},
-      {task:"discovery_call_prep",description:"Generate discovery call scripts and qualification questions for the target personas",inputs:["suggested_icp","strategy_report.sections.ideal_customer_profile","strategy_report.sections.target_buyer_personas"]},
-      {task:"roi_calculator",description:"Build an ROI model based on the pain points and market data",inputs:["suggested_icp.pain_points","market","company.value_proposition"]},
-    ]
-  };
-}
+  setProg(100,aborted?'Stopped':'Complete');
+  $('btnRun').disabled=false;$('btnStop').style.display='none';
+  if(Object.keys(res).length)$('exportFooter').classList.add('show');
+  if(cached){$('btnRefresh').style.display='';$('dot').className='dot a';$('dotText').textContent='Cached';}
+  else{$('dot').className='dot g';$('dotText').textContent='Live';}
 
-function dlJSON(){
-  const json=buildExportJSON();
-  const blob=new Blob([JSON.stringify(json,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`ICP_${(json.company.name||'Company').replace(/\s+/g,'_')}_${new Date().toISOString().split('T')[0]}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast('JSON exported for AI agent!');
-}
-
-function dlPDF(){
-  const{jsPDF}=window.jspdf;const doc=new jsPDF();
-  const r=RD||{};let y=20;const M=20,W=170;
-  doc.setFontSize(22);doc.setTextColor(30,64,175);doc.text('ICP Strategy Report',M,y);y+=10;
-  doc.setFontSize(11);doc.setTextColor(100);doc.text(r.company_name||'Company',M,y);y+=5;
-  doc.text('Generated: '+new Date().toLocaleDateString(),M,y);y+=10;
-  doc.setDrawColor(200);doc.line(M,y,M+W,y);y+=8;
-  if(REPORT_RAW){
-    const ct=REPORT_RAW.replace(/## /g,'\n\n').replace(/### /g,'\n').replace(/\*\*/g,'').replace(/\n{3,}/g,'\n\n');
-    const lines=doc.splitTextToSize(ct,W);
-    doc.setFontSize(9);doc.setTextColor(40);
-    lines.forEach(l=>{if(y>275){doc.addPage();y=20}doc.text(l,M,y);y+=4.5});
+  // Fire n8n webhook if ICP data exists and score ≥ 15
+  if(icp && icp.total >= 15 && !aborted){
+    try{
+      const wr=await fetch('/api/fire-webhook',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,icp:icp,research:rc})});
+      const wd=await wr.json();
+      if(wd.success)console.log('✓ n8n webhook fired');
+      else console.log('⚠ Webhook:',wd.reason||wd.error||'not fired');
+    }catch(we){console.log('⚠ Webhook error:',we.message);}
   }
-  doc.save(`ICP_Strategy_${(r.company_name||'Company').replace(/\s+/g,'_')}_${new Date().toISOString().split('T')[0]}.pdf`);
-  toast('PDF downloaded!');
+}
+function stop(){aborted=true;$('btnRun').disabled=false;$('btnStop').style.display='none';}
+function refresh(){run(true);}
+
+// ═══════════════════════════════════════════════════
+// PDF EXPORT
+// ═══════════════════════════════════════════════════
+function exportPDF(){
+const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');
+const W=210,H=297,ML=20,MR=20,MT=25,MB=25,CW=W-ML-MR;let y=MT,pg=0;
+const url=$('urlInput').value.trim(),as=allSrc(),date=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+const V=[109,40,217],VL=[237,233,254],C=[8,145,178],CL=[236,254,255],D=[30,27,75],G=[107,114,128],LB=[249,250,251],GR=[21,128,61],GL=[240,253,244],GB=[187,247,208],WH=[255,255,255],RO=[225,29,72];
+function ft(){pg++;doc.setDrawColor(229,231,235);doc.line(ML,H-14,W-MR,H-14);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...G);doc.text('Askit.ai MEDDIC Intelligence Engine',ML,H-9);doc.text(as.length+' sources',W/2,H-9,{align:'center'});doc.text('Page '+pg,W-MR,H-9,{align:'right'});}
+function chk(n){if(y+n>H-MB-10){ft();doc.addPage();y=MT;}}
+function parseHTML(html){const t=document.createElement('div');t.innerHTML=html;const b=[];function w(n){if(n.nodeType===3){const t=n.textContent.trim();if(t)b.push({type:'p',text:t});return;}if(n.nodeType!==1)return;const tag=n.tagName.toLowerCase();if(tag==='h3')b.push({type:'h3',text:n.textContent.trim()});else if(tag==='h4')b.push({type:'h4',text:n.textContent.trim()});else if(tag==='p')b.push({type:'p',text:n.textContent.trim()});else if(tag==='ul'||tag==='ol'){const items=[];n.querySelectorAll(':scope > li').forEach(li=>items.push(li.textContent.trim()));if(items.length)b.push({type:'list',items});}else if(tag==='table'){const rows=[];n.querySelectorAll('tr').forEach(tr=>{const cells=[];tr.querySelectorAll('th,td').forEach(c=>cells.push({text:c.textContent.trim(),h:c.tagName==='TH'}));if(cells.length)rows.push(cells);});if(rows.length)b.push({type:'table',rows});}else if(tag==='blockquote')b.push({type:'quote',text:n.textContent.trim()});else if(tag==='div'&&n.classList.contains('action-box'))b.push({type:'action',text:n.textContent.trim()});else for(const ch of n.childNodes)w(ch);}for(const ch of t.childNodes)w(ch);return b;}
+function render(blocks){for(const b of blocks){switch(b.type){
+case'h3':chk(14);y+=3;doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(...D);const h3=doc.splitTextToSize(b.text,CW);doc.text(h3,ML,y);y+=h3.length*5.5+2;doc.setDrawColor(...V);doc.setLineWidth(0.4);doc.line(ML,y,ML+25,y);y+=4;break;
+case'h4':chk(10);y+=2;doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...V);doc.text(b.text.toUpperCase(),ML,y);y+=6;break;
+case'p':if(!b.text)break;doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...D);const p=doc.splitTextToSize(b.text,CW);chk(p.length*4.2+2);doc.text(p,ML,y);y+=p.length*4.2+3;break;
+case'list':doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...D);b.items.forEach((item)=>{const l=doc.splitTextToSize(item,CW-10);chk(l.length*4.2+2);doc.text('\u2022',ML+2,y);doc.text(l,ML+9,y);y+=l.length*4.2+1.5;});y+=2;break;
+case'table':if(!b.rows.length)break;const cc=b.rows[0].length;const cw=CW/cc;chk(b.rows.length*8+4);b.rows.forEach((row,ri)=>{if(row[0]&&row[0].h){doc.setFillColor(...V);doc.rect(ML,y-4,CW,8,'F');doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...WH);}else{doc.setFillColor(ri%2===0?255:245,ri%2===0?255:246,ri%2===0?255:250);doc.rect(ML,y-4,CW,8,'F');doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...D);}row.forEach((cell,ci)=>{const ct=doc.splitTextToSize(cell.text,cw-4);doc.text(ct[0]||'',ML+ci*cw+2,y);});y+=8;});y+=4;break;
+case'quote':doc.setFont('helvetica','italic');doc.setFontSize(9);doc.setTextColor(...G);const q=doc.splitTextToSize(b.text,CW-14);chk(q.length*4+6);doc.setFillColor(245,243,255);doc.rect(ML,y-3,CW,q.length*4+6,'F');doc.setDrawColor(...V);doc.setLineWidth(0.8);doc.line(ML,y-3,ML,y+q.length*4+3);doc.text(q,ML+6,y+1);y+=q.length*4+8;break;
+case'action':const a=doc.splitTextToSize(b.text,CW-16);chk(a.length*4+10);doc.setFillColor(...GL);doc.rect(ML,y-3,CW,a.length*4+10,'F');doc.setDrawColor(...GB);doc.setLineWidth(0.6);doc.rect(ML,y-3,CW,a.length*4+10,'S');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...GR);doc.text('SALES REP ACTIONS',ML+6,y+1);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...D);doc.text(a,ML+6,y+7);y+=a.length*4+14;break;}}}
+
+// Cover
+doc.setFillColor(...V);doc.rect(0,0,W,80,'F');doc.setFillColor(139,92,246);doc.rect(0,72,W,8,'F');
+doc.setFont('helvetica','bold');doc.setFontSize(26);doc.setTextColor(...WH);doc.text('MEDDIC Intelligence',ML,34);
+doc.setFontSize(12);doc.setFont('helvetica','normal');doc.text('Prospect Qualification Report',ML,44);
+doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text(url,ML,60);
+y=95;doc.setFillColor(...LB);doc.roundedRect(ML,y,CW,24,3,3,'F');doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...G);doc.text('Date:',ML+6,y+9);doc.text('Sources:',ML+6,y+18);doc.setFont('helvetica','bold');doc.setTextColor(...D);doc.text(date,ML+25,y+9);doc.text(as.length+' verified web references',ML+30,y+18);
+
+if(icp){y=130;doc.setFillColor(...VL);doc.roundedRect(ML,y,CW,16,3,3,'F');doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(...V);doc.text('ICP FIT: '+icp.total+'/30',ML+6,y+10);const tc=icp.total>=25?GR:icp.total>=15?[180,130,0]:RO;doc.setTextColor(...tc);doc.text(icp.verdict,ML+70,y+10);
+y+=22;doc.setFillColor(...V);doc.rect(ML,y,CW,7,'F');doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...WH);doc.text('DIMENSION',ML+3,y+5);doc.text('SCORE',ML+72,y+5);doc.text('EVIDENCE',ML+90,y+5);y+=7;
+icp.dimensions.forEach((d,i)=>{chk(8);doc.setFillColor(i%2===0?255:248,i%2===0?255:250,i%2===0?255:252);doc.rect(ML,y,CW,7,'F');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...D);doc.text(d.name,ML+3,y+5);const sc=d.score>=3?GR:d.score>=2?[180,130,0]:RO;doc.setTextColor(...sc);doc.text(d.score+'/3',ML+74,y+5);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...G);doc.text(doc.splitTextToSize(d.reason,CW-93)[0]||'',ML+90,y+5);y+=7;});}
+ft();
+
+TABS.forEach(s=>{if(!res[s.id])return;doc.addPage();y=MT;doc.setFillColor(...V);doc.rect(0,0,W,20,'F');doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...WH);doc.text(s.L+' '+s.label,ML,13);doc.setFontSize(8);doc.setFont('helvetica','normal');doc.text(url,W-MR,13,{align:'right'});y=28;
+render(parseHTML(res[s.id]));
+const ss=src[s.id]||[];if(ss.length){chk(16);y+=3;doc.setFillColor(...CL);doc.roundedRect(ML,y,CW,7,2,2,'F');doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...C);doc.text('SOURCES ('+ss.length+')',ML+4,y+5);y+=10;ss.forEach((s,i)=>{chk(7);let dn;try{dn=new URL(s.url).hostname.replace('www.','');}catch(e){dn=s.url;}doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...C);doc.text('['+(i+1)+']',ML+2,y);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...D);doc.text(doc.splitTextToSize(s.title||dn,CW-22)[0]||'',ML+12,y);y+=6;});}ft();});
+
+if(as.length){doc.addPage();y=MT;doc.setFillColor(...C);doc.rect(0,0,W,20,'F');doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...WH);doc.text('All Sources ('+as.length+')',ML,13);y=28;
+as.forEach((s,i)=>{chk(10);let dn;try{dn=new URL(s.url).hostname.replace('www.','');}catch(e){dn=s.url;}if(i%2===0){doc.setFillColor(249,250,251);doc.rect(ML,y-2,CW,9,'F');}doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...C);doc.text('['+(i+1)+']',ML+2,y+1);doc.setFontSize(7.5);doc.setTextColor(...D);doc.text(doc.splitTextToSize(s.title||dn,CW-35)[0]||'',ML+12,y+1);doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(...G);doc.text(doc.splitTextToSize(s.url,CW-12)[0]||'',ML+12,y+5);y+=9;});ft();}
+
+doc.save('MEDDIC_'+url.replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.pdf');
 }
 
-function cpClip(){
-  const r=RD||{};
-  const t=`ICP STRATEGY REPORT\n${'='.repeat(50)}\nCompany: ${r.company_name||'N/A'}\nSector: ${r.sector||'N/A'}\nDate: ${new Date().toLocaleDateString()}\n\n${REPORT_RAW||'No report generated yet.'}`;
-  navigator.clipboard.writeText(t).then(()=>toast('Copied to clipboard!')).catch(()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');document.body.removeChild(a);toast('Copied!')});
-}
+function exportDoc(){const url=$('urlInput').value.trim();let h='<html><head><meta charset="utf-8"><style>body{font-family:Calibri,sans-serif;color:#1a1a2e;max-width:800px;margin:0 auto;padding:40px;}h1{color:#6d28d9;border-bottom:2px solid #6d28d9;padding-bottom:8px;}h2{color:#6d28d9;margin-top:32px;}h3{color:#1e1b4b;}h4{color:#7c3aed;text-transform:uppercase;}p{font-size:13px;line-height:1.7;}ul{padding-left:20px;}li{font-size:13px;margin-bottom:6px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{background:#ede9fe;color:#6d28d9;padding:8px 12px;text-align:left;font-size:11px;border:1px solid #e5e7eb;}td{padding:8px 12px;border:1px solid #e5e7eb;font-size:12px;}.action-box{background:#f0fdf4;border:2px solid #bbf7d0;border-radius:8px;padding:16px;margin:16px 0;}.action-box h4{color:#15803d;}</style></head><body>';h+='<h1>MEDDIC Intelligence Report</h1><p><strong>'+url+'</strong> | '+new Date().toLocaleString()+'</p>';if(icp){h+='<h2>ICP: '+icp.total+'/30 - '+icp.verdict+'</h2><table><tr><th>Dimension</th><th>Score</th><th>Evidence</th></tr>';icp.dimensions.forEach(d=>{h+='<tr><td>'+d.name+'</td><td>'+d.score+'/3</td><td>'+d.reason+'</td></tr>';});h+='</table>';}TABS.forEach(s=>{if(res[s.id])h+='<h2>'+s.L+' - '+s.label+'</h2>'+res[s.id];});h+='</body></html>';const blob=new Blob([h],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='MEDDIC_'+url.replace(/[^a-zA-Z0-9]/g,'_')+'.doc';a.click();}
 
-function resetAll(){RD=null;REPORT=null;REPORT_RAW='';document.querySelectorAll('select').forEach(s=>s.value='');document.querySelectorAll('input').forEach(i=>i.value='');document.querySelectorAll('textarea').forEach(t=>t.value='');document.querySelectorAll('.nav-t').forEach(t=>t.classList.remove('done'));document.getElementById('rsBox').classList.remove('on');go(1);toast('Reset — enter a new company')}
-function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
-document.getElementById('url').addEventListener('keydown',e=>{if(e.key==='Enter')doResearch()});
+$('urlInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!$('btnRun').disabled)run();});
 </script>
 </body>
 </html>
