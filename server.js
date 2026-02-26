@@ -8,14 +8,13 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || '';
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
-app.use(express.json({ limit: '50kb' }));
+app.use(express.json({ limit: '100kb' }));
 
 const limiter = rateLimit({
-  windowMs: 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false,
+  windowMs: 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false,
   message: { error: 'Rate limit exceeded. Please wait a minute.' },
 });
 app.use('/api/', limiter);
@@ -73,20 +72,6 @@ function getCacheStats() {
 }
 
 // ── SOURCE EXTRACTION ─────────────────────────────────────────────────────────
-function markdownToHTML(text) {
-  return text
-    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^# (.+)$/gm, '<h3>$1</h3>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-    .replace(/\n{2,}/g, '</p><p>')
-    .replace(/^(?!<[hupoltd])/gm, (m) => m ? `<p>${m}` : m);
-}
-
 function extractSources(messageContent) {
   const sources = [];
   const seen = new Set();
@@ -95,11 +80,7 @@ function extractSources(messageContent) {
       for (const item of block.content) {
         if (item.type === 'web_search_result' && item.url && !seen.has(item.url)) {
           seen.add(item.url);
-          sources.push({
-            url: item.url,
-            title: item.title || item.url,
-            snippet: item.snippet || '',
-          });
+          sources.push({ url: item.url, title: item.title || item.url });
         }
       }
     }
@@ -112,75 +93,127 @@ function extractText(messageContent) {
 }
 
 // ── SYSTEM PROMPT ─────────────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `You are a senior B2B sales intelligence analyst for Askit.ai. You specialize in ICP (Ideal Customer Profile) analysis and company research.
+const SYSTEM_PROMPT = `You are a world-class market research and ICP (Ideal Customer Profile) analyst.
 
-ASKIT.AI PRODUCT: AI-powered consumer behavior simulation and creative testing platform. Predicts how real audiences will respond to messages, creatives, and concepts BEFORE launch.
+YOUR JOB: Given a company URL, research the company thoroughly and build their Ideal Customer Profile — meaning, who should THIS company be selling to? Who is their best-fit customer?
 
-VALUE PROP: Choose winning ideas and creatives in hours instead of weeks, reducing wasted ad spend and failed launches.
+CRITICAL RULES — ACCURACY ABOVE ALL:
+- EVERY claim must be verified by web search. Do NOT guess, assume, or fabricate.
+- If you cannot verify a fact, say "Could not verify" — NEVER make something up.
+- Prefer primary sources: the company's own website, press releases, SEC filings, LinkedIn, Crunchbase.
+- If data is estimated (e.g. revenue range), label it explicitly as "Estimated".
+- Include the source URL for every factual claim.
+- Do NOT hallucinate executive names, revenue figures, employee counts, or customer examples.
 
-THREE PROBLEMS SOLVED:
-1. WASTED AD SPEND — $50K-100K+/mo on underperforming creative. Askit improves hit rate 30-50%.
-2. SLOW VALIDATION — 6-8 weeks, $15-30K/project → hours, $500-1K/test.
-3. POOR AUDIENCE UNDERSTANDING — Generic personas (2-3% conversion) → behavioral modeling (4-5%).
+OUTPUT: Always respond in valid JSON. No markdown, no code fences, no preamble. Raw JSON only.`;
 
-USE CASES: Ad creative testing, positioning/messaging validation, landing page optimization, launch/campaign planning.
-
-ICP: 50-2000 employees, consumer brands/fintech/media, $100K+ marketing budget, active paid acquisition, digitally mature.
-
-ICP SCORING (10 dims, 0-3 each, max 30): Company Size, Industry Fit, Marketing Budget, Experimentation Maturity, Pain Intensity, Urgency/Timing, AI Openness, Active Paid Media, Recent Rebrand/Launch, DTC/Ecommerce. 25-30=Strong, 15-24=Medium, 0-14=Low.
-
-CRITICAL SOURCING RULES:
-- ALWAYS search the web for current information before making claims.
-- EVERY factual claim MUST include an inline citation.
-- Use: <span class="cite" data-source="URL">[Source: Domain Name]</span>
-- If you cannot find a source, label as "Estimated" or "Industry benchmark".
-- Prefer primary sources (company websites, SEC filings, press releases).
-
-OUTPUT RULES:
-- Output ONLY valid HTML. NEVER use markdown syntax.
-- Use <h3>, <h4>, <p>, <ul>/<li>, <table>, <blockquote>, <strong>, <em>.
-- NEVER start with preamble — go straight into HTML.
-- Cite specific facts with inline source citations.`;
-
-// ── PROMPT BUILDER ────────────────────────────────────────────────────────────
+// ── PROMPTS ───────────────────────────────────────────────────────────────────
 function buildPrompt(section, url, context) {
-  const ctx = context || '';
-  const CITE_REMINDER = `\n\nREMINDER: Search the web for current data. Every factual claim MUST have an inline citation using <span class="cite" data-source="URL">[Source: Domain]</span>. Mark unverified claims as "Estimated".`;
-
   const prompts = {
-    research: `Search the web for the EXACT company at this URL: ${url}
+    // Step 1: Deep company research
+    research: `Search the web thoroughly for the company at: ${url}
 
-CRITICAL URL VALIDATION:
-- Search for the exact domain "${url}" first.
-- If you cannot find a real company website at this exact URL, respond ONLY with: <h3>Company Not Found</h3><p>Could not verify a company at <strong>${url}</strong>. Please check the URL and try again.</p>
-- Do NOT guess, do NOT research a similarly-named company.
+CRITICAL: Search for the EXACT domain "${url}". If you cannot find a real company at this URL, respond with:
+{"error": "Company not found at ${url}. Please check the URL and try again."}
 
-If the company IS found, research thoroughly:
+If found, research and return this EXACT JSON structure. EVERY field must be backed by web search — leave empty string "" if you cannot verify:
 
-<h3>Company Overview</h3>
-What they do, business model (DTC/wholesale/hybrid), product categories, founding year, HQ.
+{
+  "company": {
+    "name": "",
+    "url": "${url}",
+    "description": "",
+    "founded": "",
+    "headquarters": "",
+    "employee_count": "",
+    "employee_range": "",
+    "revenue_estimate": "",
+    "funding_total": "",
+    "funding_stage": "",
+    "business_model": "",
+    "industry": "",
+    "sub_industry": "",
+    "products_services": [],
+    "key_offerings": [],
+    "value_proposition": "",
+    "pricing_model": "",
+    "target_markets": [],
+    "geographies_served": [],
+    "notable_customers": [],
+    "competitors": [],
+    "tech_stack_signals": [],
+    "recent_news": [],
+    "leadership": [{"name": "", "title": "", "source": ""}],
+    "social_presence": {"linkedin": "", "twitter": "", "instagram": "", "other": ""},
+    "ad_channels": [],
+    "content_marketing": ""
+  },
+  "sources": [{"url": "", "title": ""}]
+}
 
-<h3>Size &amp; Financials</h3>
-Employee count, revenue estimates, funding history.
+Search multiple times to fill every field. For notable_customers and competitors, search specifically for those. For leadership, verify names are CURRENT.`,
 
-<h3>Last 12 Months — Key Events</h3>
-Product launches, campaigns, rebrands, market expansions, leadership changes, partnerships, awards.
+    // Step 2: Build ICP based on the research
+    icp: `Based on this verified research about ${url}:
 
-<h3>Marketing &amp; Ad Signals</h3>
-Ad channels used, creative strategies, public ad spend data, social media presence.
+${context}
 
-<h3>Tech Stack</h3>
-Ecommerce platform, marketing tools, analytics.
+Now BUILD the Ideal Customer Profile for this company — who is THEIR best-fit customer?
 
-<h3>Competitive Landscape &amp; Pain Points</h3>
-Challenges in press, competitive pressures, industry headwinds.
+Use industry benchmarks, the company's positioning, their pricing model, the competitive landscape, and their current customer base to determine this.
 
-<h3>Key Executives</h3>
-CEO, CMO, VP Marketing, Head of Growth — verify current titles.
+Search the web for:
+1. Industry benchmarks for companies in this segment (who typically buys from companies like this?)
+2. The company's own marketing — who are they targeting?
+3. Case studies or testimonials — who are their actual customers?
+4. Competitor customer profiles — who do similar companies sell to?
 
-For EVERY fact, cite with: <span class="cite" data-source="URL">[Source: Domain]</span>${CITE_REMINDER}`,
+Return this EXACT JSON. Every field must be research-backed. Use "" for anything you cannot verify:
 
-    icp: `Based on this research about ${url}:\n\n${ctx}\n\nSearch the web to verify any claims you're unsure about. Score against Askit.ai ICP — 10 dimensions, 0-3 each.\n\nRESPOND IN EXACT JSON ONLY (no markdown, no fences):\n{"dimensions":[{"name":"Company Size","score":0,"reason":"..."},{"name":"Industry Fit","score":0,"reason":"..."},{"name":"Marketing Budget","score":0,"reason":"..."},{"name":"Experimentation Maturity","score":0,"reason":"..."},{"name":"Pain Intensity","score":0,"reason":"..."},{"name":"Urgency / Timing","score":0,"reason":"..."},{"name":"AI Openness","score":0,"reason":"..."},{"name":"Active Paid Media","score":0,"reason":"..."},{"name":"Recent Rebrand / Launch","score":0,"reason":"..."},{"name":"DTC / Ecommerce","score":0,"reason":"..."}],"total":0,"verdict":"Strong Fit / Medium Fit / Low Fit","summary":"2-3 sentences"}\n\nBe strict: 3 only with clear evidence. 0-1 if unknown. Include source URLs in reason fields where possible.`,
+{
+  "icp": {
+    "summary": "2-3 sentence summary of who this company's ideal customer is",
+    "firmographics": {
+      "company_size": {"min_employees": 0, "max_employees": 0, "sweet_spot": "", "reasoning": ""},
+      "revenue_range": {"min": "", "max": "", "sweet_spot": "", "reasoning": ""},
+      "industries": [{"name": "", "fit_reason": ""}],
+      "geographies": [{"region": "", "reasoning": ""}],
+      "company_stage": "",
+      "business_model_fit": []
+    },
+    "demographics": {
+      "primary_buyer": {"title": "", "department": "", "seniority": "", "reasoning": ""},
+      "secondary_buyers": [{"title": "", "department": "", "role_in_decision": ""}],
+      "influencers": [{"title": "", "department": "", "influence_type": ""}],
+      "end_users": [{"role": "", "how_they_use": ""}]
+    },
+    "psychographics": {
+      "pain_points": [{"pain": "", "severity": "", "evidence": ""}],
+      "goals": [{"goal": "", "priority": "", "evidence": ""}],
+      "buying_triggers": [{"trigger": "", "timing": ""}],
+      "objections": [{"objection": "", "how_to_handle": ""}]
+    },
+    "technographics": {
+      "current_tools_they_likely_use": [{"tool": "", "category": "", "relevance": ""}],
+      "tech_maturity": "",
+      "integration_requirements": [],
+      "data_signals": []
+    },
+    "behavioral": {
+      "buying_process": "",
+      "typical_sales_cycle": "",
+      "decision_criteria": [],
+      "budget_range": "",
+      "preferred_channels": [],
+      "content_consumed": []
+    },
+    "disqualifiers": [{"signal": "", "why_bad_fit": ""}],
+    "look_alike_companies": [{"name": "", "why_similar": "", "source": ""}]
+  },
+  "methodology": "Brief explanation of how this ICP was derived — what sources and benchmarks were used",
+  "confidence": "high / medium / low — based on data availability",
+  "sources": [{"url": "", "title": ""}]
+}`
   };
   return prompts[section] || '';
 }
@@ -197,88 +230,40 @@ app.post('/api/generate', async (req, res) => {
   }
 
   const prompt = buildPrompt(section, url, context);
-  const useSearch = (section !== 'icp');
 
   try {
-    console.log(`  🔄 GENERATE: ${section} for ${normalizeUrl(url)}${useSearch ? ' [web search]' : ''}`);
+    console.log(`  🔄 GENERATE: ${section} for ${normalizeUrl(url)} [web search]`);
     const t0 = Date.now();
 
     const params = {
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
+      max_tokens: 8000,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
     };
-    if (useSearch) params.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
 
     const message = await anthropic.messages.create(params);
     const rawContent = extractText(message.content);
-    const content = markdownToHTML(rawContent);
     const sources = extractSources(message.content);
 
     const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
-    console.log(`  ✓ ${section} done (${content.length} chars, ${sources.length} sources, ${elapsed}s)`);
+    console.log(`  ✓ ${section} done (${rawContent.length} chars, ${sources.length} sources, ${elapsed}s)`);
 
-    saveToCache(url, section, content, sources);
-    res.json({ success: true, content, sources, cached: false });
+    saveToCache(url, section, rawContent, sources);
+    res.json({ success: true, content: rawContent, sources, cached: false });
   } catch (error) {
     console.error(`  ✗ ${section} error:`, error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
-// ── N8N WEBHOOK INTEGRATION ──────────────────────────────────────────────────
-async function fireN8nWebhook(url, icpData, researchContent) {
-  if (!N8N_WEBHOOK_URL) {
-    console.log('  ⚠ N8N_WEBHOOK_URL not set — skipping webhook');
-    return { fired: false, reason: 'no_webhook_url' };
-  }
-  try {
-    console.log(`  🔗 Firing n8n webhook for ${normalizeUrl(url)}...`);
-    const resp = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        url: url,
-        icp: icpData,
-        research: researchContent,
-        timestamp: new Date().toISOString(),
-        source: 'icp-discovery-engine'
-      })
-    });
-    const status = resp.status;
-    console.log(`  ✓ Webhook fired (HTTP ${status})`);
-    return { fired: true, status };
-  } catch (e) {
-    console.error(`  ✗ Webhook failed:`, e.message);
-    return { fired: false, error: e.message };
-  }
-}
-
-app.post('/api/fire-webhook', async (req, res) => {
-  const { url, icp, research } = req.body;
-  if (!url) return res.status(400).json({ error: 'Missing url' });
-  if (!icp) return res.status(400).json({ error: 'Missing icp data' });
-  const result = await fireN8nWebhook(url, icp, research || '');
-  res.json({ success: result.fired, ...result });
-});
-
-// ── CACHE STATUS ──────────────────────────────────────────────────────────────
-app.get('/api/cache-status', (req, res) => {
-  const url = req.query.url;
-  if (!url) return res.status(400).json({ error: 'Missing url' });
-  const sections = ['research', 'icp'];
-  const cached = {}; let allCached = true;
-  for (const s of sections) { cached[s] = !!getFromCache(url, s); if (!cached[s]) allCached = false; }
-  res.json({ url: normalizeUrl(url), cached, allCached });
-});
-
+// ── CLEAR CACHE ───────────────────────────────────────────────────────────────
 app.post('/api/clear-cache', (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'Missing url' });
-  const sections = ['research', 'icp'];
   let cleared = 0;
-  for (const s of sections) {
+  for (const s of ['research', 'icp']) {
     const fp = getCachePath(getCacheKey(url, s));
     if (fs.existsSync(fp)) { fs.unlinkSync(fp); cleared++; }
   }
@@ -293,9 +278,7 @@ app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'index.
 
 app.listen(PORT, () => {
   const s = getCacheStats();
-  console.log(`\n  ✦ Askit ICP Discovery Engine — port ${PORT}`);
+  console.log(`\n  ✦ ICP Discovery Engine — port ${PORT}`);
   console.log(`  ✦ API key: ${process.env.ANTHROPIC_API_KEY ? '✓' : '✗ MISSING'}`);
-  console.log(`  ✦ Web search: research section`);
-  console.log(`  ✦ n8n webhook: ${N8N_WEBHOOK_URL || '✗ NOT SET (set N8N_WEBHOOK_URL env var)'}`);
   console.log(`  ✦ Cache: ${s.activeEntries} entries, ${s.uniqueUrls} URLs (24h TTL)\n`);
 });
