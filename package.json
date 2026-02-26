@@ -1,7 +1,7 @@
 {
-  "name": "askit-icp-discovery-engine",
-  "version": "1.0.0",
-  "description": "Askit.ai ICP Discovery Engine — Standalone company research + ICP scoring",
+  "name": "icp-discovery-engine",
+  "version": "2.0.0",
+  "description": "ICP Discovery Engine — Self-service Ideal Customer Profile builder",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
