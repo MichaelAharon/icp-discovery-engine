@@ -70,7 +70,38 @@ function getCacheStats() {
     return { activeEntries: active, uniqueUrls: urls.size, expiredCleaned: expired };
   } catch (e) { return { activeEntries: 0, uniqueUrls: 0, expiredCleaned: 0 }; }
 }
+// ── STATS TRACKER ─────────────────────────────────────────────────────────────
+const STATS_FILE = path.join(__dirname, '.stats.json');
+const PRICING = { input_per_m: 3.00, output_per_m: 15.00 };
 
+function loadStats() {
+  try {
+    if (fs.existsSync(STATS_FILE)) return JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
+  } catch(e) {}
+  return { totalCalls:0, cachedCalls:0, inputTokens:0, outputTokens:0, totalCostUsd:0, callsBySection:{}, callsByUrl:{}, webhooksFired:0, startedAt:new Date().toISOString(), lastCallAt:null };
+}
+
+function saveStats(s) {
+  try { fs.writeFileSync(STATS_FILE, JSON.stringify(s, null, 2)); } catch(e) {}
+}
+
+function recordUsage(section, url, inputTokens, outputTokens, cached) {
+  const s = loadStats();
+  s.totalCalls++;
+  if (cached) { s.cachedCalls++; return saveStats(s); }
+  s.inputTokens  += inputTokens  || 0;
+  s.outputTokens += outputTokens || 0;
+  s.totalCostUsd += ((inputTokens||0)/1_000_000 * PRICING.input_per_m) + ((outputTokens||0)/1_000_000 * PRICING.output_per_m);
+  s.callsBySection[section] = (s.callsBySection[section] || 0) + 1;
+  const domain = normalizeUrl(url).split('/')[0];
+  s.callsByUrl[domain] = (s.callsByUrl[domain] || 0) + 1;
+  s.lastCallAt = new Date().toISOString();
+  saveStats(s);
+}
+
+function recordWebhook() {
+  const s = loadStats(); s.webhooksFired = (s.webhooksFired||0)+1; saveStats(s);
+}
 // ── SOURCE EXTRACTION ─────────────────────────────────────────────────────────
 function extractSources(messageContent) {
   const sources = [];
@@ -249,7 +280,7 @@ app.post('/api/generate', async (req, res) => {
 
     const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
     console.log(`  ✓ ${section} done (${rawContent.length} chars, ${sources.length} sources, ${elapsed}s)`);
-
+recordUsage(section, url, message.usage?.input_tokens||0, message.usage?.output_tokens||0, false);
     saveToCache(url, section, rawContent, sources);
     res.json({ success: true, content: rawContent, sources, cached: false });
   } catch (error) {
@@ -271,7 +302,38 @@ app.post('/api/clear-cache', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), cache: getCacheStats() });
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), cache: getCacheStats(), uptime: Math.floor(process.uptime()), n8nWebhook: !!process.env.N8N_WEBHOOK_URL });
+});
+
+app.get('/api/stats', (req, res) => {
+  const s = loadStats();
+  const cache = getCacheStats();
+  const daysSinceStart = Math.max(1,(Date.now()-new Date(s.startedAt).getTime())/(1000*60*60*24));
+  const dailyRate = s.totalCostUsd / daysSinceStart;
+  res.json({
+    totalCostUsd:      parseFloat(s.totalCostUsd.toFixed(4)),
+    monthlyProjection: parseFloat((dailyRate*30).toFixed(2)),
+    inputTokens:       s.inputTokens,
+    outputTokens:      s.outputTokens,
+    totalTokens:       s.inputTokens + s.outputTokens,
+    totalCalls:        s.totalCalls,
+    cachedCalls:       s.cachedCalls,
+    liveCalls:         s.totalCalls - s.cachedCalls,
+    cacheHitRate:      s.totalCalls>0 ? parseFloat(((s.cachedCalls/s.totalCalls)*100).toFixed(1)) : 0,
+    webhooksFired:     s.webhooksFired||0,
+    cacheEntries:      cache.activeEntries,
+    uniqueUrls:        cache.uniqueUrls,
+    sectionBreakdown:  Object.entries(s.callsBySection||{}).sort((a,b)=>b[1]-a[1]).map(([section,count])=>({section,count})),
+    topUrls:           Object.entries(s.callsByUrl||{}).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([url,count])=>({url,count})),
+    startedAt:         s.startedAt,
+    lastCallAt:        s.lastCallAt,
+    daysSinceStart:    parseFloat(daysSinceStart.toFixed(1)),
+    fixedCosts: {
+      railway: parseFloat(process.env.RAILWAY_MONTHLY_USD||'20'),
+      n8n:     parseFloat(process.env.N8N_MONTHLY_USD||'20'),
+      hubspot: parseFloat(process.env.HUBSPOT_MONTHLY_USD||'0'),
+    }
+  });
 });
 
 app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'index.html')); });
