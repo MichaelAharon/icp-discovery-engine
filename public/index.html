@@ -290,13 +290,8 @@ async function run(force) {
     if (d.cached) cached = true;
     if (d.sources) allSources.push(...d.sources);
 
-    const parsed = parseJSON(d.content);
-    if (parsed.error) {
-      $('errorMsg').textContent = parsed.error;
-      $('errorMsg').classList.add('show');
-      setStep('research', 'fail'); finish(cached); return;
-    }
-    companyData = parsed.company || parsed;
+    const parsed = { content: d.content };
+companyData = parsed.content;
     setStep('research', d.cached ? 'cached' : 'done');
   } catch (err) {
     setStep('research', 'fail');
