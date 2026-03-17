@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Askit.ai — Live Ops Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0a0a0f; --s1:#111118; --s2:#17171f; --s3:#1e1e28;
+      --b1:rgba(255,255,255,0.07); --b2:rgba(255,255,255,0.13);
+      --accent:#7c6cfa; --a2:#a78bfa;
+      --green:#22d3a0; --amber:#f59e0b; --red:#f87171; --blue:#60a5fa;
+      --txt:#f0eeff; --muted:#8882aa; --dim:#5a5575;
+      --mono:'JetBrains Mono',monospace; --sans:'Space Grotesk',sans-serif;
+    }
+    html,body { background:var(--bg); color:var(--txt); font-family:var(--sans); min-height:100vh; padding:20px 16px 48px; }
+    .shell { max-width:1020px; margin:0 auto; border:1px solid var(--b2); border-radius:18px; overflow:hidden; }
+    /* TOPBAR */
+    .topbar { background:var(--s1); border-bottom:1px solid var(--b2); padding:14px 26px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+    .logo { display:flex; align-items:center; gap:10px; }
+    .logo-mark { width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,#7c6cfa,#a78bfa); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:600; color:#fff; }
+    .logo-text { font-size:15px; font-weight:600; letter-spacing:-.01em; }
+    .logo-sub  { font-size:11px; color:var(--muted); font-family:var(--mono); }
+    .topbar-right { display:flex; align-items:center; gap:10px; }
+    .status-cluster { display:flex; align-items:center; gap:6px; }
+    .live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:blink 2s ease-in-out infinite; }
+    .live-dot.error { background:var(--red); animation:none; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .live-label { font-size:11px; font-family:var(--mono); color:var(--green); letter-spacing:.06em; }
+    .live-label.error { color:var(--red); }
+    .refresh-badge { font-size:10px; font-family:var(--mono); color:var(--dim); background:var(--s2); border:1px solid var(--b1); border-radius:6px; padding:3px 9px; }
+    /* BODY */
+    .body { padding:22px 26px 28px; display:flex; flex-direction:column; gap:22px; background:var(--bg); }
+    .sec-label { font-size:10px; font-family:var(--mono); color:var(--dim); letter-spacing:.12em; text-transform:uppercase; margin-bottom:11px; }
+    /* STAT GRID */
+    .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    @media(max-width:640px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+    .stat { background:var(--s1); border:1px solid var(--b1); border-radius:11px; padding:16px 18px; }
+    .stat-num { font-size:26px; font-weight:600; letter-spacing:-.03em; line-height:1; margin-bottom:6px; }
+    .stat-lbl { font-size:11px; color:var(--muted); line-height:1.4; }
+    .spin { display:inline-block; animation:spin .8s linear infinite; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* COST PANEL */
+    .cost-panel { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media(max-width:640px){.cost-panel{grid-template-columns:1fr;}}
+    .cost-card { background:var(--s1); border:1px solid var(--b1); border-radius:12px; padding:18px 20px; }
+    .cost-title { font-size:12px; font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .cost-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--b1); font-size:12px; }
+    .cost-row:last-child { border-bottom:none; }
+    .cost-row-label { color:var(--muted); display:flex; align-items:center; gap:6px; }
+    .cost-row-val { font-family:var(--mono); font-size:12px; font-weight:500; }
+    .dot-svc { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .dot-purple{background:var(--accent);} .dot-green{background:var(--green);} .dot-amber{background:var(--amber);} .dot-blue{background:var(--blue);}
+    .total-row { margin-top:10px; padding-top:10px; border-top:1px solid var(--b2); display:flex; justify-content:space-between; font-size:13px; font-weight:600; }
+    .total-row .val { font-family:var(--mono); color:var(--a2); }
+    .proj-row { margin-top:6px; display:flex; justify-content:space-between; font-size:11px; color:var(--muted); }
+    .proj-row .val { font-family:var(--mono); color:var(--amber); }
+    .token-bar-wrap { margin-top:12px; }
+    .token-bar-labels { display:flex; justify-content:space-between; font-size:10px; font-family:var(--mono); color:var(--muted); margin-bottom:5px; }
+    .token-bar { height:6px; background:var(--s3); border-radius:4px; overflow:hidden; display:flex; }
+    .token-bar-in  { background:var(--accent); height:100%; transition:width .6s ease; }
+    .token-bar-out { background:var(--green);  height:100%; transition:width .6s ease; }
+    /* SVC GRID */
+    .svc-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+    @media(max-width:620px){.svc-grid{grid-template-columns:1fr;}}
+    .svc-card { background:var(--s1); border:1px solid var(--b1); border-radius:12px; padding:16px 18px; position:relative; overflow:hidden; transition:border-color .2s; }
+    .svc-card::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; border-radius:3px 0 0 3px; }
+    .svc-card.purple::before{background:var(--accent);} .svc-card.green::before{background:var(--green);} .svc-card.amber::before{background:var(--amber);} .svc-card.blue::before{background:var(--blue);}
+    .svc-card:hover{border-color:var(--b2);}
+    .svc-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .svc-name { font-size:13px; font-weight:600; }
+    .svc-pill { font-size:10px; font-family:var(--mono); padding:2px 9px; border-radius:20px; display:flex; align-items:center; gap:5px; letter-spacing:.04em; }
+    .svc-pill::before { content:''; width:5px; height:5px; border-radius:50%; }
+    .svc-pill.live   { background:rgba(34,211,160,.12);   color:var(--green); }
+    .svc-pill.live::before   { background:var(--green); animation:blink 2s ease-in-out infinite; }
+    .svc-pill.error  { background:rgba(248,113,113,.12);  color:var(--red); }
+    .svc-pill.error::before  { background:var(--red); }
+    .svc-pill.checking { background:rgba(139,138,170,.1); color:var(--muted); }
+    .svc-pill.checking::before { background:var(--muted); }
+    .svc-stats { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px; }
+    .svc-stat { background:var(--s2); border-radius:7px; padding:7px 10px; }
+    .svc-stat-val { font-size:16px; font-weight:600; font-family:var(--mono); line-height:1; margin-bottom:2px; }
+    .svc-stat-lbl { font-size:10px; color:var(--muted); }
+    .svc-url { font-family:var(--mono); font-size:10px; color:var(--muted); background:var(--s2); border:1px solid var(--b1); border-radius:6px; padding:5px 9px; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden; text-decoration:none; }
+    .svc-url:hover{border-color:var(--b2);}
+    .svc-url-text { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; color:var(--muted); }
+    .copy-btn { background:rgba(255,255,255,.06); border:none; border-radius:4px; color:var(--muted); font-size:10px; font-family:var(--mono); padding:2px 8px; cursor:pointer; flex-shrink:0; transition:background .15s,color .15s; }
+    .copy-btn:hover{background:var(--accent);color:#fff;}
+    .svc-uptime { font-size:10px; font-family:var(--mono); color:var(--dim); margin-top:8px; }
+    /* PIPELINE */
+    .pipeline-card { background:var(--s1); border:1px solid var(--b1); border-radius:12px; padding:18px 20px; }
+    .flow-track { display:flex; align-items:center; overflow-x:auto; padding-bottom:4px; }
+    .flow-node { display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
+    .flow-bubble { background:var(--s2); border:1px solid var(--b2); border-radius:8px; padding:7px 12px; font-size:11px; font-weight:500; white-space:nowrap; }
+    .flow-bubble.a{background:rgba(124,108,250,.15);border-color:rgba(124,108,250,.35);color:var(--a2);}
+    .flow-bubble.g{background:rgba(34,211,160,.12);border-color:rgba(34,211,160,.3);color:var(--green);}
+    .flow-bubble.b{background:rgba(96,165,250,.12);border-color:rgba(96,165,250,.3);color:var(--blue);}
+    .flow-sub { font-size:10px; color:var(--muted); font-family:var(--mono); margin-top:5px; }
+    .flow-arr { width:26px; height:2px; background:var(--b2); flex-shrink:0; position:relative; margin-bottom:18px; }
+    .flow-arr::after { content:''; position:absolute; right:-1px; top:-3px; border-left:6px solid var(--b2); border-top:4px solid transparent; border-bottom:4px solid transparent; }
+    .pipeline-stats { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+    .p-stat { background:var(--s2); border-radius:8px; padding:8px 14px; font-size:11px; display:flex; align-items:center; gap:8px; }
+    .p-stat-val { font-family:var(--mono); font-weight:600; font-size:14px; }
+    .p-stat-lbl { color:var(--muted); }
+    /* BREAKDOWN */
+    .breakdown-card { background:var(--s1); border:1px solid var(--b1); border-radius:12px; padding:18px 20px; }
+    .breakdown-row { display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid var(--b1); }
+    .breakdown-row:last-child{border-bottom:none;}
+    .breakdown-name { font-family:var(--mono); font-size:11px; color:var(--muted); width:90px; flex-shrink:0; }
+    .breakdown-bar-wrap { flex:1; height:6px; background:var(--s3); border-radius:4px; overflow:hidden; }
+    .breakdown-bar { height:100%; background:var(--accent); border-radius:4px; transition:width .6s ease; }
+    .breakdown-count { font-family:var(--mono); font-size:11px; color:var(--txt); min-width:28px; text-align:right; }
+    /* FOOTER */
+    .footer { background:var(--s1); border-top:1px solid var(--b2); padding:12px 26px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+    .footer-left { font-size:11px; font-family:var(--mono); color:var(--dim); }
+    .last-updated { font-size:10px; font-family:var(--mono); color:var(--dim); }
+    /* TOAST */
+    #toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--s2); border:1px solid var(--b2); border-radius:9px; padding:9px 18px; font-size:12px; font-family:var(--mono); color:var(--green); opacity:0; transition:transform .25s ease,opacity .25s ease; pointer-events:none; white-space:nowrap; z-index:9999; }
+    #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-mark">A</div>
+      <div>
+        <div class="logo-text">askit.ai</div>
+        <div class="logo-sub">live ops dashboard</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-cluster">
+        <div class="live-dot" id="global-dot"></div>
+        <span class="live-label" id="global-label">connecting…</span>
+      </div>
+      <div class="refresh-badge" id="refresh-badge">refreshing…</div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <div>
+      <div class="sec-label">live overview</div>
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="stat-num" id="s-cost" style="color:var(--a2)"><span class="spin">↻</span></div>
+          <div class="stat-lbl">Claude API<br>total spend</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="s-proj" style="color:var(--amber)"><span class="spin">↻</span></div>
+          <div class="stat-lbl">Monthly cost<br>projection</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="s-calls" style="color:var(--green)"><span class="spin">↻</span></div>
+          <div class="stat-lbl">Total API<br>calls</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="s-cache" style="color:var(--blue)"><span class="spin">↻</span></div>
+          <div class="stat-lbl">Cache hit<br>rate</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-label">cost breakdown</div>
+      <div class="cost-panel">
+        <div class="cost-card">
+          <div class="cost-title">◆ Claude API (Variable)</div>
+          <div class="cost-row"><span class="cost-row-label">Input tokens</span><span class="cost-row-val" id="c-input-tok">—</span></div>
+          <div class="cost-row"><span class="cost-row-label">Output tokens</span><span class="cost-row-val" id="c-output-tok">—</span></div>
+          <div class="cost-row"><span class="cost-row-label">Input cost ($3/M)</span><span class="cost-row-val" id="c-input-cost">—</span></div>
+          <div class="cost-row"><span class="cost-row-label">Output cost ($15/M)</span><span class="cost-row-val" id="c-output-cost">—</span></div>
+          <div class="total-row"><span>Total API spend</span><span class="val" id="c-total">—</span></div>
+          <div class="proj-row"><span>Projected this month</span><span class="val" id="c-proj">—</span></div>
+          <div class="token-bar-wrap">
+            <div class="token-bar-labels"><span>Input <span id="tb-in-pct">—</span>%</span><span>Output <span id="tb-out-pct">—</span>%</span></div>
+            <div class="token-bar"><div class="token-bar-in" id="tb-in" style="width:50%"></div><div class="token-bar-out" id="tb-out" style="width:50%"></div></div>
+          </div>
+        </div>
+        <div class="cost-card">
+          <div class="cost-title">▲ Infrastructure (Fixed / mo)</div>
+          <div class="cost-row"><span class="cost-row-label"><span class="dot-svc dot-purple"></span> Railway (ICP Engine)</span><span class="cost-row-val" id="fc-railway">—</span></div>
+          <div class="cost-row"><span class="cost-row-label"><span class="dot-svc dot-amber"></span> n8n Cloud</span><span class="cost-row-val" id="fc-n8n">—</span></div>
+          <div class="cost-row"><span class="cost-row-label"><span class="dot-svc dot-blue"></span> HubSpot CRM</span><span class="cost-row-val" id="fc-hubspot">—</span></div>
+          <div class="total-row"><span>Fixed monthly total</span><span class="val" id="fc-total">—</span></div>
+          <div class="proj-row"><span>Est. total this month</span><span class="val" id="fc-grand">—</span></div>
+          <div class="cost-row" style="margin-top:14px;padding-top:10px;border-top:1px solid var(--b2);">
+            <span class="cost-row-label">Cache calls saved</span><span class="cost-row-val" id="fc-saves" style="color:var(--green)">—</span>
+          </div>
+          <div class="cost-row"><span class="cost-row-label">Webhooks fired</span><span class="cost-row-val" id="fc-hooks">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-label">services — live status</div>
+      <div class="svc-grid">
+        <div class="svc-card purple">
+          <div class="svc-head"><div class="svc-name">ICP Discovery Engine</div><div class="svc-pill checking" id="pill-icp">checking</div></div>
+          <div class="svc-stats">
+            <div class="svc-stat"><div class="svc-stat-val" id="icp-entries" style="color:var(--a2)">—</div><div class="svc-stat-lbl">cache entries</div></div>
+            <div class="svc-stat"><div class="svc-stat-val" id="icp-urls" style="color:var(--a2)">—</div><div class="svc-stat-lbl">unique URLs</div></div>
+          </div>
+          <a class="svc-url" href="https://icp-discovery-engine-production.up.railway.app" target="_blank">
+            <span class="svc-url-text">icp-discovery-engine-production.up.railway.app</span>
+            <button class="copy-btn" onclick="cp(event,'https://icp-discovery-engine-production.up.railway.app')">copy</button>
+          </a>
+          <div class="svc-uptime" id="icp-uptime">uptime: —</div>
+        </div>
+        <div class="svc-card green">
+          <div class="svc-head"><div class="svc-name">MEDDIC Intelligence v7</div><div class="svc-pill checking" id="pill-meddic">checking</div></div>
+          <div class="svc-stats">
+            <div class="svc-stat"><div class="svc-stat-val" id="m-calls" style="color:var(--green)">—</div><div class="svc-stat-lbl">total calls</div></div>
+            <div class="svc-stat"><div class="svc-stat-val" id="m-live" style="color:var(--green)">—</div><div class="svc-stat-lbl">live (non-cached)</div></div>
+          </div>
+          <a class="svc-url" href="https://icp-discovery-engine-production.up.railway.app/api/stats" target="_blank">
+            <span class="svc-url-text">…/api/stats</span>
+            <button class="copy-btn" onclick="cp(event,'https://icp-discovery-engine-production.up.railway.app/api/stats')">copy</button>
+          </a>
+          <div class="svc-uptime" id="m-last">last call: —</div>
+        </div>
+        <div class="svc-card amber">
+          <div class="svc-head"><div class="svc-name">n8n Lead Pipeline</div><div class="svc-pill live" id="pill-n8n">live</div></div>
+          <div class="svc-stats">
+            <div class="svc-stat"><div class="svc-stat-val" id="n8n-hooks" style="color:var(--amber)">—</div><div class="svc-stat-lbl">webhooks fired</div></div>
+            <div class="svc-stat"><div class="svc-stat-val" id="n8n-configured" style="color:var(--amber)">—</div><div class="svc-stat-lbl">webhook set</div></div>
+          </div>
+          <a class="svc-url" href="https://a1l2y3.app.n8n.cloud" target="_blank">
+            <span class="svc-url-text">a1l2y3.app.n8n.cloud</span>
+            <button class="copy-btn" onclick="cp(event,'https://a1l2y3.app.n8n.cloud')">copy</button>
+          </a>
+          <div class="svc-uptime">pipeline: ICP score ≥15 → triggers</div>
+        </div>
+        <div class="svc-card blue">
+          <div class="svc-head"><div class="svc-name">HubSpot CRM</div><div class="svc-pill live" id="pill-hs">live</div></div>
+          <div class="svc-stats">
+            <div class="svc-stat"><div class="svc-stat-val" style="color:var(--blue)">7</div><div class="svc-stat-lbl">custom props</div></div>
+            <div class="svc-stat"><div class="svc-stat-val" style="color:var(--blue)" id="hs-access">—</div><div class="svc-stat-lbl">access level</div></div>
+          </div>
+          <a class="svc-url" href="https://app.hubspot.com" target="_blank">
+            <span class="svc-url-text">app.hubspot.com</span>
+            <button class="copy-btn" onclick="cp(event,'https://app.hubspot.com')">copy</button>
+          </a>
+          <div class="svc-uptime">contacts enriched by n8n pipeline</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <div class="sec-label">automation pipeline</div>
+        <div class="pipeline-card">
+          <div class="flow-track">
+            <div class="flow-node"><div class="flow-bubble a">ICP Engine</div><div class="flow-sub">railway</div></div>
+            <div class="flow-arr"></div>
+            <div class="flow-node"><div class="flow-bubble">Gate</div><div class="flow-sub">≥15 pts</div></div>
+            <div class="flow-arr"></div>
+            <div class="flow-node"><div class="flow-bubble a">Claude</div><div class="flow-sub">profiler</div></div>
+            <div class="flow-arr"></div>
+            <div class="flow-node"><div class="flow-bubble b">HubSpot</div><div class="flow-sub">contact</div></div>
+            <div class="flow-arr"></div>
+            <div class="flow-node"><div class="flow-bubble g">Gmail</div><div class="flow-sub">alert</div></div>
+          </div>
+          <div class="pipeline-stats">
+            <div class="p-stat"><div class="p-stat-val" id="pp-hooks" style="color:var(--amber)">—</div><div class="p-stat-lbl">runs fired</div></div>
+            <div class="p-stat"><div class="p-stat-val" id="pp-calls" style="color:var(--green)">—</div><div class="p-stat-lbl">total reports</div></div>
+            <div class="p-stat"><div class="p-stat-val" id="pp-tokens" style="color:var(--a2)">—</div><div class="p-stat-lbl">M tokens used</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="sec-label">calls by section</div>
+        <div class="breakdown-card" id="breakdown-wrap">
+          <div style="color:var(--muted);font-size:12px;font-family:var(--mono);">loading…</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="footer-left">askit-ai.com · hello@askit-ai.com · server-v7.js</div>
+    <div class="last-updated" id="last-updated">last updated: —</div>
+  </div>
+</div>
+
+<div id="toast">copied</div>
+
+<script>
+  // ── CONFIG ──────────────────────────────────────────────────────────────────
+  // Empty = same-origin (served from Railway alongside the engine).
+  // If you host this separately, change to the full engine URL:
+  // const ENGINE = 'https://icp-discovery-engine-production.up.railway.app';
+  const ENGINE = '';
+
+  const PRICE_IN = 3.00, PRICE_OUT = 15.00; // $/M tokens
+
+  // ── HELPERS ────────────────────────────────────────────────────────────────
+  function fmtUsd(n, force4=false) {
+    if (n == null) return '—';
+    const v = parseFloat(n);
+    return '$' + (v < 0.01 || force4 ? v.toFixed(4) : v.toFixed(2));
+  }
+  function fmtK(n)   { if (n==null) return '—'; return n>=1000?(n/1000).toFixed(1)+'k':String(n); }
+  function fmtM(n)   { if (n==null) return '—'; return (n/1_000_000).toFixed(3); }
+  function fmtUp(s)  { if (!s) return '—'; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60); return h+'h '+m+'m'; }
+  function fmtTs(iso){ if (!iso) return 'never'; try{return new Date(iso).toLocaleTimeString();}catch(e){return iso;} }
+
+  function setPill(id, status) {
+    const el = document.getElementById(id); if (!el) return;
+    el.className = 'svc-pill ' + status;
+    el.textContent = {live:'live', error:'offline', checking:'checking'}[status] || status;
+  }
+  function setGlobal(ok) {
+    document.getElementById('global-dot').className   = 'live-dot' + (ok?'':' error');
+    document.getElementById('global-label').className = 'live-label' + (ok?'':' error');
+    document.getElementById('global-label').textContent = ok ? 'ALL SYSTEMS LIVE' : 'SERVICE DEGRADED';
+  }
+  function set(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+
+  // ── FETCH ─────────────────────────────────────────────────────────────────
+  async function get(path) {
+    try {
+      const r = await fetch(ENGINE + path, { signal: AbortSignal.timeout(7000) });
+      if (!r.ok) throw new Error(r.status);
+      return await r.json();
+    } catch(e) { return null; }
+  }
+
+  // ── RENDER ─────────────────────────────────────────────────────────────────
+  function render(h, s) {
+    const ok = !!h && h.status === 'ok';
+    setGlobal(ok);
+    setPill('pill-icp',    ok ? 'live' : 'error');
+    setPill('pill-meddic', ok ? 'live' : 'error');
+    set('hs-access', 'read+write');
+
+    if (h) {
+      set('icp-entries', h.cache?.activeEntries ?? '—');
+      set('icp-urls',    h.cache?.uniqueUrls    ?? '—');
+      set('icp-uptime',  'uptime: ' + fmtUp(h.uptime));
+    }
+
+    if (s) {
+      // Overview stats
+      set('s-cost',  fmtUsd(s.totalCostUsd, true));
+      set('s-proj',  fmtUsd(s.monthlyProjection) + '/mo');
+      set('s-calls', fmtK(s.totalCalls));
+      set('s-cache', (s.cacheHitRate ?? '—') + '%');
+
+      // Claude cost card
+      const inCost  = (s.inputTokens  / 1e6) * PRICE_IN;
+      const outCost = (s.outputTokens / 1e6) * PRICE_OUT;
+      set('c-input-tok',   fmtK(s.inputTokens)  + ' tok');
+      set('c-output-tok',  fmtK(s.outputTokens) + ' tok');
+      set('c-input-cost',  fmtUsd(inCost, true));
+      set('c-output-cost', fmtUsd(outCost, true));
+      set('c-total',       fmtUsd(s.totalCostUsd, true));
+      set('c-proj',        fmtUsd(s.monthlyProjection) + '/mo');
+
+      // Token bar
+      const tot = (s.inputTokens + s.outputTokens) || 1;
+      const ip  = Math.round((s.inputTokens  / tot) * 100);
+      const op  = Math.round((s.outputTokens / tot) * 100);
+      document.getElementById('tb-in').style.width  = ip + '%';
+      document.getElementById('tb-out').style.width = op + '%';
+      set('tb-in-pct',  ip);
+      set('tb-out-pct', op);
+
+      // Fixed costs
+      const fc = s.fixedCosts || {};
+      const fixedTotal = (fc.railway||0) + (fc.n8n||0) + (fc.hubspot||0);
+      set('fc-railway', '$'+(fc.railway||0).toFixed(0)+'/mo');
+      set('fc-n8n',     '$'+(fc.n8n||0).toFixed(0)+'/mo');
+      set('fc-hubspot', fc.hubspot > 0 ? '$'+fc.hubspot.toFixed(0)+'/mo' : 'free');
+      set('fc-total',   '$'+fixedTotal.toFixed(0)+'/mo');
+      set('fc-grand',   fmtUsd(fixedTotal + (s.monthlyProjection||0)) + '/mo');
+      set('fc-saves',   (s.cachedCalls||0) + ' calls saved');
+      set('fc-hooks',   s.webhooksFired || 0);
+
+      // MEDDIC card
+      set('m-calls', fmtK(s.totalCalls));
+      set('m-live',  fmtK(s.liveCalls));
+      set('m-last',  'last call: ' + fmtTs(s.lastCallAt));
+
+      // n8n card
+      set('n8n-hooks',      s.webhooksFired || 0);
+      set('n8n-configured', h?.n8nWebhook ? 'yes ✓' : 'not set ✗');
+
+      // Pipeline stats
+      set('pp-hooks',  s.webhooksFired || 0);
+      set('pp-calls',  fmtK(s.totalCalls));
+      set('pp-tokens', fmtM(s.totalTokens));
+
+      // Section breakdown
+      renderBreakdown(s.sectionBreakdown || []);
+    }
+
+    set('last-updated', 'last updated: ' + new Date().toLocaleTimeString());
+  }
+
+  function renderBreakdown(rows) {
+    const wrap = document.getElementById('breakdown-wrap');
+    if (!rows.length) {
+      wrap.innerHTML = '<div style="color:var(--muted);font-size:12px;font-family:var(--mono);">no calls yet</div>';
+      return;
+    }
+    const max = rows[0].count || 1;
+    wrap.innerHTML = rows.map(r => `
+      <div class="breakdown-row">
+        <div class="breakdown-name">${r.section}</div>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round((r.count/max)*100)}%"></div></div>
+        <div class="breakdown-count">${r.count}</div>
+      </div>`).join('');
+  }
+
+  // ── REFRESH LOOP ───────────────────────────────────────────────────────────
+  let countdown = 60;
+
+  async function refresh() {
+    set('refresh-badge', 'refreshing…');
+    const [h, s] = await Promise.all([get('/api/health'), get('/api/stats')]);
+    render(h, s);
+    countdown = 60;
+  }
+
+  function tick() {
+    countdown--;
+    if (countdown <= 0) { refresh(); return; }
+    set('refresh-badge', 'refresh in ' + countdown + 's');
+  }
+
+  // ── COPY ───────────────────────────────────────────────────────────────────
+  function cp(e, url) {
+    e.preventDefault(); e.stopPropagation();
+    navigator.clipboard.writeText(url).catch(()=>{});
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 1800);
+  }
+
+  // ── BOOT ───────────────────────────────────────────────────────────────────
+  refresh();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>
